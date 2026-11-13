@@ -11,3 +11,4 @@ psycopg[binary]
 python-dotenv
 modal
 shapely
+pytest

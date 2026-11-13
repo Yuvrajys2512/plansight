@@ -9,14 +9,16 @@ from typing import Any
 class Evidence:
     """A region on a drawing that supports the answer.
 
-    bbox is in the coordinate space of `file` page `page` (PDF points, origin top-left),
-    so the UI can draw it directly on the rendered sheet.
+    bbox is in the coordinate space of `file` page `page` (PDF points for PDFs, pixels for raster images;
+    origin top-left), so the UI can draw it directly on the rendered sheet. `polygon` (same space), when
+    present, is the exact outline (e.g. a rotated room); the UI should draw it instead of the box.
     """
 
     file: str
     page: int
     bbox: tuple[float, float, float, float]
     label: str = ""
+    polygon: list[tuple[float, float]] | None = None
 
 
 @dataclass
