@@ -10,3 +10,4 @@ openai
 psycopg[binary]
 python-dotenv
 modal
+shapely
