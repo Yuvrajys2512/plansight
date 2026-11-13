@@ -36,8 +36,28 @@ def nvidia():
     nem = [i for i in ids if "nemotron" in i.lower()]
     vl = [i for i in nem if re.search(r"vl|vision|omni", i, re.I)]
     show("NVIDIA Build", True, f"{len(ids)} models, {len(nem)} nemotron")
-    for i in (vl or nem)[:12]:
-        print(f"         - {i}")
+    model = env("NEMOTRON_MODEL")
+    if model not in ids:
+        show("  Nemotron model", False, f"NEMOTRON_MODEL '{model}' not in catalogue; VL options:")
+        for i in (vl or nem)[:12]:
+            print(f"         - {i}")
+        return
+    # Real multimodal call: a 1x1 red PNG. Proves key + vision input + model ID all work.
+    png = ("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==")
+    h = {"Authorization": f"Bearer {k}"}
+    body = {"model": model, "max_tokens": 20, "messages": [{"role": "user", "content": [
+        {"type": "text", "text": "What colour is this image? One word."},
+        {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{png}"}}]}]}
+    r = httpx.post("https://integrate.api.nvidia.com/v1/chat/completions", headers=h, json=body, timeout=120)
+    if r.status_code == 200:
+        show("  Nemotron VL call", True, f"{model.split('/')[-1]} -> {r.json()['choices'][0]['message']['content']!r:.40}")
+    else:
+        show("  Nemotron VL call", False, f"HTTP {r.status_code} {r.text[:120]}")
+    g = env("GEMMA_MODEL")
+    if g in ids:
+        r = httpx.post("https://integrate.api.nvidia.com/v1/chat/completions", headers=h, timeout=60, json={
+            "model": g, "max_tokens": 5, "messages": [{"role": "user", "content": "Say OK"}]})
+        show("  Gemma via NVIDIA", r.status_code == 200, g if r.status_code == 200 else f"HTTP {r.status_code}")
 
 
 def verda_cloud():

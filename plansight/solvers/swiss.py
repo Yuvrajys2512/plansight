@@ -326,3 +326,20 @@ DISPATCH = {
 def answer(path: str, template: str, params: dict) -> Answer:
     base = str(Path(path).with_suffix("")).replace("\\", "/")
     return DISPATCH[template](base, **params)
+
+
+class SwissSolver:
+    """Solver-protocol wrapper (see plansight/solvers/base.py)."""
+
+    name = "swiss"
+
+    def can_handle(self, path: str) -> bool:
+        return "swiss_dwellings/" in path.replace("\\", "/")
+
+    def solve(self, path: str, question: str) -> Answer | None:
+        from plansight.config import resolve
+
+        parsed = parse_en(question)
+        if parsed is None:
+            return None
+        return answer(str(resolve(path)), *parsed)
