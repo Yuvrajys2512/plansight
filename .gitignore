@@ -1,0 +1,31 @@
+# secrets
+.env
+.env.*
+!.env.example
+
+# private planning docs (local only, never public)
+CLAUDE.md
+PLAN.md
+
+# data (never commit the dataset, ~10 GB)
+junction-dataset-preview/
+junction-dataset/
+data/
+*.zip
+
+# python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# outputs
+runs/
+cache/
+*.log
+
+# os / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

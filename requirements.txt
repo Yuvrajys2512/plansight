@@ -1,0 +1,12 @@
+pymupdf
+ifcopenshell
+ezdxf
+opencv-python-headless
+numpy
+pillow
+fastapi
+uvicorn[standard]
+openai
+psycopg[binary]
+python-dotenv
+modal
