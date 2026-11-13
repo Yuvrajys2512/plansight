@@ -6,6 +6,7 @@
 # private planning docs (local only, never public)
 CLAUDE.md
 PLAN.md
+ACCESS.md
 
 # data (never commit the dataset, ~10 GB)
 junction-dataset-preview/
