@@ -11,6 +11,12 @@ branches) and its work is merged into `main` at the end of each phase. See `AGEN
 - Verified: `D:\Junction\.venv\Scripts\python.exe -m pytest -q` -> 54 passed, including 6 API tests for Swiss/IFC/CubiCasa answers, evidence, examples, raster rendering, normal abstention, and IFC model facts.
 - Open issues: Cloudinary credentials are not configured; P3 serves local dataset media and uses a documented placeholder. CubiCasa visual-template questions may abstain until Lane A's solver is merged, as planned.
 
+### <Sat 03:56 Helsinki> Phase 3: Cloudinary starter and demo UI
+- Built: Scaffolded `web/` with the required `create-cloudinary-react` starter (placeholder `demo-cloud`), configured the `/api` Vite proxy, and replaced the starter screen with a projector-readable drawing picker, sheet viewer, SVG evidence overlay, zoom/pan, example prompts, answer/abstain card, cost comparison, and IFC model-facts toggle. The UI does not require Cloudinary credentials.
+- Files: `web/**`
+- Verified: `npm.cmd run build` in `web/` -> TypeScript check and Vite production build passed.
+- Open issues: Live Cloudinary media and credentials remain a P4 integration.
+
 ### <Sat 01:41 Helsinki> Phase 1: evaluation harness
 - Built: Added configured JSONL loading with source/language tags, deterministic proportional sampling by source/type/language, exact count and 2% measurement scoring, text-unscored handling, solver routing/selection, exception capture, latency/evidence/cost recording, grouped console and Markdown summaries, and timestamped JSONL outputs. Added Phase 1 preset and five scorer/sampler/language tests.
 - Files: `plansight/eval/__init__.py`, `plansight/eval/__main__.py`, `plansight/eval/data.py`, `plansight/eval/scoring.py`, `plansight/eval/runner.py`, `tests/test_eval.py`, `CODEX_LOG.md`
