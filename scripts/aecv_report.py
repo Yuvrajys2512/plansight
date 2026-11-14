@@ -110,6 +110,8 @@ def main():
     split = {p[0]: "AB"[i % 2] for i, p in enumerate(plans)}
     gold = {p[0]: p[2] for p in plans}
     fr, fcost = frontier(repo)
+    leak = json.loads((RUNS / "aecv_leakage.json").read_text())
+    train_leak = set(leak["train_overlap"])
     det, ocr = load("aecv-cubicasa_objects-plain.jsonl"), load("aecv-ocr.jsonl")
     rooms = load("aecv-cubicasa_rooms-plain.jsonl")
     nemo = {}
@@ -141,9 +143,13 @@ def main():
 
     lines = ["# AECV-Bench object counting: frontier models vs PlanSight", "",
              "Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **split B (60 plans) was "
-             "never tuned on**. Frontier answers and costs are the published AECV-Bench results.", ""]
-    for sp in ("B", "A", "all"):
-        names = [n for n in gold if sp == "all" or split[n] == sp]
+             "never tuned on**. Frontier answers and costs are the published AECV-Bench results.", "",
+             f"**Leakage audit** (`scripts/aecv_leakage.py`, dHash): {len(leak['any_cubicasa_overlap'])} of 120 AECV plans "
+             f"are CubiCasa5K images, and {len(leak['train_overlap'])} of them are in our detector's training split. "
+             "The *clean* tables drop those plans for every system; they are the honest numbers for PlanSight.", ""]
+    for sp in ("B clean", "B", "A", "all clean", "all"):
+        base = sp.split()[0]
+        names = [n for n in gold if (base == "all" or split[n] == base) and not (sp.endswith("clean") and n in train_leak)]
         lines += [f"## Split {sp} ({len(names)} plans)", "",
                   "| System | " + " | ".join(KINDS) + " | Mean | $/plan |", "|---" * (len(KINDS) + 3) + "|"]
         for sysname, (ans, cost) in systems.items():
@@ -164,7 +170,7 @@ def main():
     nm_rows = nemo.get("v0-1536", {})
     for n, img, g in plans:
         res, notes, c, trace = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
-        ui[n] = {"image": f"img/{n}.jpg", "split": split[n], "gold": {k: g.get(k) for k in KINDS},
+        ui[n] = {"image": f"img/{n}.jpg", "split": split[n], "in_detector_train": n in train_leak, "gold": {k: g.get(k) for k in KINDS},
                  "frontier": {m: {k: fr[m].get(n, {}).get(k) for k in KINDS} for m in SHOW if m in fr},
                  "frontier_cost_usd": {m: fcost.get(m) for m in SHOW if m in fr},
                  "plansight": {k: {"count": len(v), "evidence": [e for e in v if e["bbox"]], "note": notes.get(k)}

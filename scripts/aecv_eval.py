@@ -72,7 +72,8 @@ def doors_windows(rec, cfg, walls=None):
 
 
 class Bench:
-    def __init__(self, det_name, extra_det=None):
+    def __init__(self, det_name, door_det=None):
+        self.door_det = load(door_det) if door_det else None
         wf = RUNS / "detcache" / f"{det_name}.walls.json"
         self.walls = json.loads(wf.read_text()) if wf.exists() else {}
         self.plans = aecv_plans(REPO)
@@ -91,6 +92,8 @@ class Bench:
 
     def predict(self, n, cfg):
         d, w = doors_windows(self.det.get(n), cfg, self.walls.get(n) if self.walls else None)
+        if self.door_det is not None:  # doors from a second detector (e.g. v2), windows/toilets from the first
+            d, _ = doors_windows(self.door_det.get(n), cfg)
         return {"Door": sum(k for _, k in d), "Window": len(w), "Toilet": self._tb[n][0], "Bedroom": self._tb[n][1]}
 
     def score(self, cfg, names):
@@ -112,11 +115,12 @@ class Bench:
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--det", default="aecv-cubicasa_objects-plain.jsonl")
+    ap.add_argument("--door-det", default=None, help="take doors from this cache instead")
     ap.add_argument("--cfg", default="{}")
     ap.add_argument("--grid", action="store_true")
     ap.add_argument("--show", default="A,A_clean", help="subsets to print; B only for finalists")
     a = ap.parse_args()
-    b = Bench(a.det)
+    b = Bench(a.det, a.door_det)
     S = b.subsets()
     cfg = json.loads(a.cfg)
     if a.grid:
