@@ -14,6 +14,7 @@ from pydantic import BaseModel
 from plansight.config import DATA_ROOT, QUESTIONS, REPO, resolve, source_of
 from plansight.eval.data import detect_language
 from plansight.api.cost import naive_cost_usd
+from plansight.api.scene3d import build_scene, cache_paths
 from plansight.solvers import route
 from plansight.store import cached_answer, log_question, save_answer, save_correction, stats as store_stats
 from plansight.store.postgres import search_drawings
@@ -168,6 +169,40 @@ def render(path: str, page: int = 0):
     return Response(_render_png(local, page), media_type="image/png")
 
 
+@app.get("/scene3d")
+@app.get("/api/scene3d")
+def scene3d(path: str):
+    local, rel = _safe_path(path)
+    ifc_model = None
+    if source_of(rel) == "ifc_models" and local.suffix.lower() != ".ifc":
+        from plansight.solvers.ifc import ifc_path, model_of
+        ifc_model = ifc_path(model_of(rel))
+        if not ifc_model.is_file():
+            raise HTTPException(404, "IFC model for this drawing was not found")
+    try:
+        return build_scene(rel, local, ifc_model=ifc_model)
+    except (ValueError, OSError, ImportError) as exc:
+        raise HTTPException(422, f"Could not build 3D scene ({type(exc).__name__})")
+
+
+@app.get("/scene3d/glb")
+@app.get("/api/scene3d/glb")
+def scene3d_glb(path: str):
+    local, rel = _safe_path(path)
+    ifc_model = None
+    if source_of(rel) == "ifc_models" and local.suffix.lower() != ".ifc":
+        from plansight.solvers.ifc import ifc_path, model_of
+        ifc_model = ifc_path(model_of(rel))
+        if not ifc_model.is_file(): raise HTTPException(404, "IFC model for this drawing was not found")
+    try:
+        scene = build_scene(rel, local, ifc_model=ifc_model)
+    except Exception as exc:
+        raise HTTPException(422, f"Could not build 3D scene ({type(exc).__name__})")
+    if scene.get("kind") != "ifc": raise HTTPException(404, "This drawing has no IFC mesh")
+    _, glb = cache_paths(rel)
+    return FileResponse(glb, media_type="model/gltf-binary", filename=glb.name)
+
+
 def _render_png(local: Path, page: int) -> bytes:
     doc, obj = _page(local, page)
     if doc:
@@ -209,6 +244,25 @@ def _normalize_evidence(result: dict) -> None:
             ev["file"] = "data/" + file.split("/data/", 1)[1]
 
 
+def _scene_tags(question: str, result: dict) -> None:
+    q = question.casefold()
+    kinds = (("door", "doors"), ("window", "windows"), ("room", "rooms"), ("kitchen", "rooms"),
+             ("bathroom", "rooms"), ("apartment", "units"), ("toilet", "fixtures"),
+             ("washbasin", "fixtures"), ("bathtub", "fixtures"), ("shower", "fixtures"))
+    match = next((scene for word, scene in kinds if word in q), None)
+    if match:
+        result["scene_kind"] = match
+        if match == "rooms":
+            import re
+            names = []
+            for ev in result.get("evidence") or []:
+                label = str(ev.get("label") or "")
+                room = re.match(r"(.+?)\s+\d+(?:\.\d+)*", label)
+                if room and room.group(1).strip() and room.group(1).strip() not in names:
+                    names.append(room.group(1).strip())
+            result["scene_room_names"] = names
+
+
 def _attach_media(local: Path, rel: str, result: dict) -> None:
     """Zoomed Cloudinary crops per evidence region + one shareable highlighted sheet."""
     def same_sheet(file) -> bool:
@@ -247,6 +301,7 @@ def ask(request: AskRequest):
                        "latency_ms": round((time.perf_counter() - start) * 1000, 2),
                        "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
         _normalize_evidence(cached)
+        _scene_tags(request.question, cached)
         try:
             _attach_media(local, rel, cached)  # URLs only; also covers answers cached before Cloudinary was on
         except Exception:
@@ -275,6 +330,7 @@ def ask(request: AskRequest):
                    "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
     result["cached"] = False
     _normalize_evidence(result)
+    _scene_tags(request.question, result)
     try:
         _attach_media(local, rel, result)
     except Exception:
