@@ -3,7 +3,8 @@ import './App.css';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?:string|null; highlight_url?:string|null };
-type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?:boolean; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string } };
+type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?:boolean; share_url?:string|null; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string } };
+type Stats = { enabled: boolean; questions?: number; answered?: number; cost_usd?: number; naive_cost_usd?: number; corrections?: number };
 type AecvPlan = { image_width:number; image_height:number; split:string; gold:Record<string,number>; frontier:Record<string,Record<string,number|null>>; frontier_cost_usd:Record<string,number|null>; plansight:Record<string,{count:number;evidence:{bbox:[number,number,number,number];label:string}[];note?:string|null}>;plansight_cost_usd:number; nemotron?:{counts:Record<string,number|null>;cost_usd:number;latency_ms:number;model:string}|null; trace?:Record<string,{rule:string;voters:Record<string,number|null>;used:string|string[];after_merge?:number}> };
 const nemoNote:Record<string,string>={Door:'Symbols are counted by the fine-tuned detector. Nemotron alone gets 13% of door counts right, so its count is shown but not used.',Window:'Symbols are counted by the fine-tuned detector. Nemotron alone gets 7% of window counts right, so its count is shown but not used.',Bedroom:'Nemotron reads the room labels on the whole plan and is one of three voters. Adding it lifted bedrooms from 77% to 85% on unseen plans.',Toilet:'Nemotron reads the room labels on the whole plan and is one of three voters (the median wins).'};
 const sourceNames: Record<string, string> = { swiss_dwellings: 'Swiss dwellings', ifc_models: 'IFC models', cubicasa5k: 'CubiCasa plans' };
@@ -15,6 +16,9 @@ function App() {
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<Answer | null>(null);
   const [busy, setBusy] = useState(false);
+  const [stats, setStats] = useState<Stats | null>(null);
+  const loadStats = () => { fetch('/api/stats').then(r => r.ok ? r.json() : null).then(setStats).catch(() => {}); };
+  useEffect(loadStats, []);
   const [size, setSize] = useState({ width: 1, height: 1 });
   const [rendered, setRendered] = useState({ width: 1, height: 1 });
   const [zoom, setZoom] = useState(1);
@@ -45,16 +49,30 @@ function App() {
   const unitScaleX = rendered.width / size.width;
   const unitScaleY = rendered.height / size.height;
 
-  const ask = async () => {
-    if (!selected || !question.trim() || busy) return;
-    setBusy(true); setAnswer(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
+  // React registers wheel listeners as passive, so preventDefault() there can't stop the browser's page zoom.
+  useEffect(() => {
+    const el = canvasRef.current; if (!el) return;
+    const onWheel = (e: WheelEvent) => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(z => Math.max(1, Math.min(4, z + (e.deltaY < 0 ? .15 : -.15)))); } };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [view]);
+
+  const ask = async (q: string = question) => {
+    if (!selected || !q.trim() || busy) return;
+    setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 });
     try {
-      const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question }) });
-      const result: Answer = await response.json(); setAnswer(result);
-      if (result.evidence?.length) {
+      const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question: q }) });
+      const result: Answer = await response.json(); setAnswer(result); setTimeout(loadStats, 1500);
+      const img = imageRef.current;
+      // Zoom onto the evidence only when it's a single small region; otherwise keep the whole sheet in view.
+      if (img && result.evidence?.length === 1) {
         const [x0, y0, x1, y1] = result.evidence[0].bbox;
-        const cx = ((x0 + x1) / 2) * unitScaleX; const cy = ((y0 + y1) / 2) * unitScaleY;
-        setZoom(2.4); setOffset({ x: -cx * 1.4, y: -cy * 1.4 });
+        const sx = img.clientWidth / size.width, sy = img.clientHeight / size.height;
+        const bw = (x1 - x0) * sx, bh = (y1 - y0) * sy;
+        const z = Math.max(1, Math.min(3, 0.5 * Math.min(img.clientWidth / Math.max(bw, 1), img.clientHeight / Math.max(bh, 1))));
+        const dx = ((x0 + x1) / 2) * sx - img.clientWidth / 2, dy = ((y0 + y1) / 2) * sy - img.clientHeight / 2;
+        setZoom(z); setOffset({ x: -dx * z, y: -dy * z });
       }
     } catch { setAnswer({ abstained: true, reason: 'The API could not be reached.' }); }
     finally { setBusy(false); }
@@ -76,7 +94,7 @@ function App() {
     <section className="aecv-sheet-panel"><div className="aecv-result"><div><span>PLANSIGHT · {aecvKind.toUpperCase()}</span><b>{activeCount} <small>items</small></b></div><div className="aecv-cost">${plan.plansight_cost_usd.toFixed(4)} <em>vs</em> ${(plan.frontier_cost_usd.claude_fable_5??.077).toFixed(3)}<small>PlanSight vs Claude Fable 5</small></div></div>{plan.trace?.[aecvKind]&&(()=>{const t=plan.trace![aecvKind],used=Array.isArray(t.used)?t.used:[t.used];return <div className="trace"><div className="trace-head"><span>HOW PLANSIGHT GOT {kindData.count}</span><em>{t.rule}{t.after_merge!=null&&t.after_merge!==t.voters.detector?` (${t.voters.detector} boxes → ${t.after_merge})`:''}</em></div><div className="trace-voters">{Object.entries(t.voters).map(([name,n])=>{const nemo=name==='nemotron';return <div key={name} className={`voter ${used.includes(name)?'used':''} ${nemo?'nemo':''}`}><small>{nemo?'Nemotron 3.5 Super VL':name}</small><b>{n??'—'}</b>{nemo&&plan.nemotron&&<i>${plan.nemotron.cost_usd.toFixed(5)} · {(plan.nemotron.latency_ms/1000).toFixed(1)} s</i>}{used.includes(name)&&<span className="voter-tag">used</span>}</div>})}</div><p>{nemoNote[aecvKind]}</p></div>})()}<div className={`aecv-image-wrap ${addMode?'adding':''}`} onClick={addBox}><div className="aecv-stage"><img ref={aecvImage} onLoad={e=>setAecvImageSize([e.currentTarget.naturalWidth,e.currentTarget.naturalHeight])} src={`/aecv/img/${aecvPlan}.jpg`} alt={`Architectural plan ${aecvPlan}`} />{aecvImageSize[0]>0&&<svg viewBox={`0 0 ${plan.image_width||aecvImageSize[0]} ${plan.image_height||aecvImageSize[1]}`} preserveAspectRatio="none">{kindData.evidence.map((ev,i)=><rect key={i} className={rejected.includes(i)?'rejected-box':''} x={ev.bbox[0]} y={ev.bbox[1]} width={ev.bbox[2]-ev.bbox[0]} height={ev.bbox[3]-ev.bbox[1]} onClick={e=>{e.stopPropagation();toggleBox(i)}}/>)}{added.map((b,i)=><rect key={`added-${i}`} className="added-box" x={b[0]} y={b[1]} width={b[2]-b[0]} height={b[3]-b[1]}/>)}</svg>}</div></div><p className="correction-hint">Tap a box to reject it. Add mode records a missed region. {plan.plansight[aecvKind]?.note||''}</p></section></div>}</main>;
 
   return <main className="app-shell">
-    <header className="topbar"><div className="brandmark">P</div><div><h1>PlanSight</h1><p>Make blueprints talk</p></div><span className="live-pill"><i /> LIVE DEMO</span><span className="top-note">Evidence-backed answers from construction drawings</span></header>
+    <header className="topbar"><div className="brandmark">P</div><div><h1>PlanSight</h1><p>Make blueprints talk</p></div><span className="live-pill"><i /> LIVE DEMO</span><span className="top-note">{stats?.enabled && stats.questions ? <>{stats.questions.toLocaleString()} questions answered · ${(stats.cost_usd ?? 0).toFixed(4)} total vs ${(stats.naive_cost_usd ?? 0).toFixed(2)} frontier · {stats.corrections ?? 0} reviewer corrections <em className="store-tag">Aiven Postgres</em></> : 'Evidence-backed answers from construction drawings'}</span></header>
     <button className="compare-launch" onClick={()=>setView('aecv')}>Frontier vs PlanSight benchmark →</button><div className="workspace">
       <aside className="picker panel"><div className="section-head"><div><span className="eyebrow">LIBRARY</span><h2>Drawings</h2></div><span className="count-pill">{drawings.length}</span></div>
         {Object.keys(sourceNames).map(source => <section className="source-group" key={source}><h3>{sourceNames[source]} <span>{drawings.filter(d => d.source === source).length}</span></h3>
@@ -84,17 +102,18 @@ function App() {
         </section>)}
       </aside>
       <section className="viewer-column"><div className="viewer panel"><div className="viewer-head"><div><span className="eyebrow">{selected?.is_model ? 'IFC MODEL FACTS' : 'SHEET VIEWER'}</span><h2>{selected?.title || 'Loading drawings…'}</h2></div><div className="zoom-controls">{selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div></div>
-          <div className="canvas" onWheel={e => { if (e.ctrlKey || e.metaKey) { e.preventDefault(); setZoom(z => Math.max(1, Math.min(4, z + (e.deltaY < 0 ? .15 : -.15)))); } }} onPointerDown={e => { if (zoom > 1) { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
+          <div className="canvas" ref={canvasRef} onPointerDown={e => { if (zoom > 1) { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
             {selected?.is_model && !evidence.length ? <div className="model-card"><span className="model-icon">⌘</span><h3>Model fact</h3>{answer?.model_fact ? <dl><dt>Element</dt><dd>{answer.model_fact.element}{answer.model_fact.element_name ? ` · ${answer.model_fact.element_name}` : ''}</dd><dt>GlobalId</dt><dd>{answer.model_fact.guid || 'Model aggregate'}</dd><dt>Property</dt><dd>{answer.model_fact.property}: {String(answer.model_fact.value)}</dd></dl> : <p>This is a 3D building model. Ask a question to see the element, GlobalId and property used for the answer.</p>}</div> : selected && <div className="sheet-transform" style={{ transform: `translate(${offset.x}px,${offset.y}px) scale(${zoom})` }}><img ref={imageRef} className="sheet-image" src={imageUrl} onLoad={e => setRendered({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight })} alt="Selected architectural drawing" />
               {evidence.length > 0 && <svg className="evidence-layer" viewBox={`0 0 ${rendered.width} ${rendered.height}`} preserveAspectRatio="none">{evidence.map((ev, i) => ev.polygon?.length ? <g key={i}><polygon points={ev.polygon.map(([x,y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /><text x={ev.bbox[0] * unitScaleX} y={Math.max(18, ev.bbox[1] * unitScaleY - 6)}>{ev.label || `Evidence ${i + 1}`}</text></g> : <g key={i}><rect x={ev.bbox[0] * unitScaleX} y={ev.bbox[1] * unitScaleY} width={(ev.bbox[2] - ev.bbox[0]) * unitScaleX} height={(ev.bbox[3] - ev.bbox[1]) * unitScaleY} /><text x={ev.bbox[0] * unitScaleX} y={Math.max(18, ev.bbox[1] * unitScaleY - 6)}>{ev.label || `Evidence ${i + 1}`}</text></g>)}</svg>}</div>}
           </div><div className="viewer-footer"><span><i className="dot-teal" /> {evidence.length ? `${evidence.length} evidence regions` : 'Evidence appears here after an answer'}</span><span>Drag to pan · Ctrl + scroll to zoom</span></div>
         </div>
-        {evidence.length > 0 && <div className="evidence-strip"><span className="evidence-check">✓</span><span><b>{evidence.length} supporting region{evidence.length === 1 ? '' : 's'}</b><small>{evidence[0].label || 'Highlighted directly on the drawing'}</small></span><span className="source-file">{evidence[0].file.split('/').pop()}</span>{evidence[0].crop_url && <a className="source-file" href={evidence[0].highlight_url || evidence[0].crop_url} target="_blank" rel="noreferrer">Cloudinary overlay</a>}</div>}
+        {evidence.length > 0 && <div className="evidence-strip"><span className="evidence-check">✓</span><span><b>{evidence.length} supporting region{evidence.length === 1 ? '' : 's'}</b><small>{evidence[0].label || 'Highlighted directly on the drawing'}</small></span><span className="source-file">{evidence[0].file.split('/').pop()}</span></div>}
+        {evidence.some(e => e.crop_url) && <div className="evidence-gallery"><div className="gallery-head"><span>EVIDENCE CROPS</span>{answer?.share_url && <a href={answer.share_url} target="_blank" rel="noreferrer">Share evidence sheet ↗</a>}<small>zoomed by Cloudinary</small></div><div className="gallery-row">{evidence.filter(e => e.crop_url).slice(0, 12).map((e, i) => <a key={i} href={e.crop_url!} target="_blank" rel="noreferrer" title={e.label || `region ${i + 1}`}><img src={e.crop_url!} alt={e.label || `evidence ${i + 1}`} loading="lazy" /></a>)}</div></div>}
       </section>
       <aside className="ask-column panel"><span className="eyebrow">ASK THIS DRAWING</span><h2>What do you want to know?</h2><label className="question-label" htmlFor="question">YOUR QUESTION</label><textarea id="question" value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="e.g. How many doors are shown on this floor plan?" />
-        <div className="examples-head"><span>TRY AN EXAMPLE</span><span>↘</span></div><div className="chips">{examples.map(q => <button key={q} onClick={() => setQuestion(q)}>{q}</button>)}</div>
+        <div className="examples-head"><span>TRY AN EXAMPLE</span><span>↘</span></div><div className="chips">{examples.map(q => <button key={q} disabled={busy} onClick={() => void ask(q)}>{q}</button>)}</div>
         <button className="ask-button" onClick={() => void ask()} disabled={busy || !question.trim()}>{busy ? 'Analyzing drawing…' : 'Ask PlanSight'} <span>↗</span></button>
-        {answer && <div className={`answer-card ${answer.abstained ? 'abstain' : ''}`}>{answer.abstained ? <><div className="answer-kicker">NOT CONFIDENT ENOUGH</div><h3>Couldn’t support an answer</h3><p>{answer.reason}</p></> : <><div className="answer-kicker">ANSWER <span className="method-badge">{answer.cached ? 'CACHED' : answer.method || 'deterministic'}</span></div><div className="answer-value">{String(answer.value)}<small>{answer.unit || ''}</small></div><div className="confidence-row"><span>Confidence</span><b>{Math.round((answer.confidence ?? 1) * 100)}%</b></div><div className="confidence-track"><i style={{ width: `${Math.round((answer.confidence ?? 1) * 100)}%` }} /></div><p className="explanation">{answer.explanation}</p><div className="solver-line">SOLVER <b>{answer.solver}</b></div></>}
+        {answer && <div className={`answer-card ${answer.abstained ? 'abstain' : ''}`}>{answer.abstained ? <><div className="answer-kicker">NOT CONFIDENT ENOUGH</div><h3>Couldn’t support an answer</h3><p>{answer.reason}</p></> : <><div className="answer-kicker">ANSWER <span className="method-badge">{answer.cached ? 'CACHED' : answer.method || 'deterministic'}</span></div><div className="answer-value">{String(answer.value)}<small>{answer.unit || ''}</small></div>{(answer.confidence ?? 1) < 1 && <><div className="confidence-row"><span>Confidence</span><b>{Math.round((answer.confidence ?? 1) * 100)}%</b></div><div className="confidence-track"><i style={{ width: `${Math.round((answer.confidence ?? 1) * 100)}%` }} /></div></>}<p className="explanation">{answer.explanation}</p><div className="solver-line">SOLVER <b>{answer.solver}</b></div></>}
           <div className="cost-box"><span className="eyebrow">COST & SPEED</span><b>This question <strong>${cost.toFixed(5)}</strong> <em>vs</em> naive frontier full-sheet <strong>${naive.toFixed(5)}</strong></b><div className="cost-foot"><span>{ratio}</span><span>{answer.latency_ms?.toFixed(0) ?? '—'} ms</span></div></div>
         </div>}
         <div className="privacy-note"><span>✦</span> Every answer is grounded in a drawing region you can inspect.</div>

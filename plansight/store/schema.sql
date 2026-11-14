@@ -17,3 +17,13 @@ CREATE TABLE IF NOT EXISTS answer_cache (
   cache_key text PRIMARY KEY, drawing_path text NOT NULL, question text NOT NULL,
   answer jsonb NOT NULL, created_at timestamptz NOT NULL DEFAULT now()
 );
+CREATE TABLE IF NOT EXISTS question_log (
+  id bigserial PRIMARY KEY, asked_at timestamptz NOT NULL DEFAULT now(), drawing_path text NOT NULL,
+  question text NOT NULL, solver text, abstained boolean NOT NULL, cached boolean NOT NULL DEFAULT false,
+  answer jsonb, cost_usd double precision NOT NULL DEFAULT 0, naive_cost_usd double precision NOT NULL DEFAULT 0,
+  latency_ms double precision NOT NULL DEFAULT 0, evidence_count integer NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS corrections (
+  id bigserial PRIMARY KEY, created_at timestamptz NOT NULL DEFAULT now(), plan text NOT NULL,
+  kind text NOT NULL, bbox real[] NOT NULL, action text NOT NULL
+);

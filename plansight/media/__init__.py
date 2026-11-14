@@ -1,4 +1,4 @@
-"""Cloudinary upload and URL transformation helpers."""
-from .cloudinary import evidence_crop_url, highlight_url, upload_drawing
+"""Cloudinary sheet hosting and evidence media (crops, shareable highlight sheet)."""
+from .cloudinary import enabled, evidence_crop_url, highlight_url, lookup, upload_png
 
-__all__ = ["evidence_crop_url", "highlight_url", "upload_drawing"]
+__all__ = ["enabled", "evidence_crop_url", "highlight_url", "lookup", "upload_png"]

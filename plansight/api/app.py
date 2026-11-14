@@ -15,9 +15,9 @@ from plansight.config import DATA_ROOT, QUESTIONS, REPO, resolve, source_of
 from plansight.eval.data import detect_language
 from plansight.api.cost import naive_cost_usd
 from plansight.solvers import route
-from plansight.store import cached_answer, save_answer
+from plansight.store import cached_answer, log_question, save_answer, save_correction, stats as store_stats
 from plansight.store.postgres import search_drawings
-from plansight.media import upload_drawing, evidence_crop_url, highlight_url
+from plansight import media
 from plansight.config import RUNS
 
 app = FastAPI(title="PlanSight API")
@@ -109,14 +109,10 @@ def _records() -> dict[str, list[dict]]:
             if local.suffix.lower() != ".ifc" and not answer.evidence:
                 continue
             thumb = f"/api/render?path={raw}&page=0"
-            cloud_id = None
-            try:
-                cloud_id = upload_drawing(local, f"plansight/demo/{src}/{local.stem}")
-            except Exception:
-                pass
-            if cloud_id:
+            sheet = None if local.suffix.lower() == ".ifc" else _cloud_sheet(local, raw, 0)
+            if sheet:
                 from plansight.media.cloudinary import transformed_url
-                thumb = transformed_url(cloud_id, "c_limit,w_500,f_auto,q_auto") or thumb
+                thumb = transformed_url(sheet["public_id"], "c_limit,w_500/f_auto,q_auto") or thumb
             model_path = raw.split("_plan-")[0] + ".ifc" if src == "ifc_models" and "_plan-" in raw else None
             grouped[src].append({"path": raw, "source": src, "title": _title(raw), "thumbnail_url": thumb,
                                  "sample_question": row["question"], "sample_answer": row.get("answer"),
@@ -169,6 +165,10 @@ def meta(path: str, page: int = 0):
 @app.get("/api/render")
 def render(path: str, page: int = 0):
     local, _ = _safe_path(path)
+    return Response(_render_png(local, page), media_type="image/png")
+
+
+def _render_png(local: Path, page: int) -> bytes:
     doc, obj = _page(local, page)
     if doc:
         pix = obj.get_pixmap(matrix=__import__("pymupdf").Matrix(1.5, 1.5), alpha=False)
@@ -179,7 +179,56 @@ def render(path: str, page: int = 0):
         buf = io.BytesIO()
         obj.convert("RGB").save(buf, format="PNG")
         content = buf.getvalue()
-    return Response(content, media_type="image/png")
+    return content
+
+
+def _cloud_sheet(local: Path, rel: str, page: int) -> dict | None:
+    """Cloudinary entry for a rendered sheet; uploads it the first time (then remembered in cache/cloudinary.json)."""
+    if not media.enabled():
+        return None
+    key = f"{rel}#{page}"
+    entry = media.lookup(key)
+    if entry:
+        return entry
+    try:
+        import io
+        from PIL import Image
+        png = _render_png(local, page)
+        width, height = Image.open(io.BytesIO(png)).size
+        stem = rel.removeprefix("data/").rsplit(".", 1)[0].replace("/", "_")
+        return media.upload_png(key, png, f"plansight/sheets/{stem}_p{page}", width, height)
+    except Exception:
+        return None
+
+
+def _normalize_evidence(result: dict) -> None:
+    """Evidence file paths -> dataset-relative 'data/...' (never leak or depend on a machine-local path)."""
+    for ev in result.get("evidence") or []:
+        file = str(ev.get("file") or "").replace("\\", "/")
+        if file and not file.startswith("data/") and "/data/" in file:
+            ev["file"] = "data/" + file.split("/data/", 1)[1]
+
+
+def _attach_media(local: Path, rel: str, result: dict) -> None:
+    """Zoomed Cloudinary crops per evidence region + one shareable highlighted sheet."""
+    def same_sheet(file) -> bool:
+        if not file or file == rel:
+            return True
+        try:
+            return resolve(file).resolve() == local.resolve()
+        except Exception:
+            return False
+    evidence = [ev for ev in result.get("evidence") or [] if ev.get("bbox") and int(ev.get("page") or 0) == 0
+                and same_sheet(ev.get("file"))]
+    if not evidence:
+        return
+    sheet = _cloud_sheet(local, rel, 0)
+    if not sheet:
+        return
+    scale = media.cloudinary.RENDER_SCALE if local.suffix.lower() == ".pdf" else 1.0
+    for ev in evidence[:media.cloudinary.MAX_HIGHLIGHTS]:
+        ev["crop_url"] = media.evidence_crop_url(sheet, ev["bbox"], scale=scale)
+    result["share_url"] = media.highlight_url(sheet, [ev["bbox"] for ev in evidence], scale=scale)
 
 
 class AskRequest(BaseModel):
@@ -194,8 +243,15 @@ def ask(request: AskRequest):
     start = time.perf_counter()
     cached = cached_answer(rel, request.question)
     if cached is not None:
-        cached.update({"cached": True, "cost_usd": 0.0, "latency_ms": 0.0,
+        cached.update({"cached": True, "cost_usd": 0.0,
+                       "latency_ms": round((time.perf_counter() - start) * 1000, 2),
                        "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
+        _normalize_evidence(cached)
+        try:
+            _attach_media(local, rel, cached)  # URLs only; also covers answers cached before Cloudinary was on
+        except Exception:
+            pass
+        log_question(rel, request.question, cached)
         return cached
     try:
         solver = route(rel)
@@ -218,15 +274,9 @@ def ask(request: AskRequest):
     result.update({"solver": solver.name, "latency_ms": latency,
                    "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
     result["cached"] = False
+    _normalize_evidence(result)
     try:
-        cloud_id = upload_drawing(local, f"plansight/demo/{source_of(rel)}/{local.stem}")
-        if cloud_id and result.get("evidence"):
-            from plansight.media import evidence_crop_url, highlight_url
-            width, height = _image_size(local, 0)
-            for ev in result["evidence"]:
-                box = tuple(round(float(v)) for v in ev["bbox"])
-                ev["crop_url"] = evidence_crop_url(cloud_id, box, width=width, height=height)
-                ev["highlight_url"] = highlight_url(cloud_id, box, width=width, height=height)
+        _attach_media(local, rel, result)
     except Exception:
         pass
     if rel.endswith(".ifc") and not answer.evidence and solver.name == "ifc":
@@ -239,7 +289,14 @@ def ask(request: AskRequest):
                                 "property": "model element count", "value": answer.value,
                                 "element_name": element.get("name") if element else None}
     save_answer(rel, request.question, result)
+    log_question(rel, request.question, result)
     return result
+
+
+@app.get("/api/stats")
+def stats():
+    """Live usage from Aiven Postgres: questions answered, total cost vs a frontier model, corrections."""
+    return store_stats()
 
 
 @app.get("/api/aecv/plans")
@@ -279,6 +336,7 @@ def feedback(request: FeedbackRequest):
     RUNS.mkdir(parents=True, exist_ok=True)
     with (RUNS / "feedback.jsonl").open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(request.model_dump(), separators=(",", ":")) + "\n")
+    save_correction(request.plan, request.kind, request.bbox, request.action)
     return {"saved": True}
 
 
