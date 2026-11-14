@@ -434,6 +434,18 @@ def feedback(request: FeedbackRequest):
     return {"saved": True}
 
 
+@app.middleware("http")
+async def no_cache_shell(request, call_next):
+    """index.html must never be cached, so a redeploy reaches every visitor; hashed /assets/* can be cached forever."""
+    resp = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.endswith(".html"):
+        resp.headers["Cache-Control"] = "no-cache, must-revalidate"
+    elif path.startswith("/assets/"):
+        resp.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+    return resp
+
+
 _DIST = REPO / "web" / "dist"
 if _DIST.is_dir():
     app.mount("/", StaticFiles(directory=_DIST, html=True), name="web")
