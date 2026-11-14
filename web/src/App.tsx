@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import Voice from './Voice';
+import Scene3D, { type Highlight } from './Scene3D';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
-type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?: boolean; share_url?: string | null; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string } };
+type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?: boolean; share_url?: string | null; scene_kind?: string | null; scene_room_names?: string[]; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string } };
 type Stats = { enabled: boolean; questions?: number; answered?: number; cost_usd?: number; naive_cost_usd?: number; corrections?: number };
 type AecvPlan = { image_width: number; image_height: number; split: string; gold: Record<string, number>; frontier: Record<string, Record<string, number | null>>; frontier_cost_usd: Record<string, number | null>; plansight: Record<string, { count: number; evidence: { bbox: [number, number, number, number]; label: string }[]; note?: string | null }>; plansight_cost_usd: number; nemotron?: { counts: Record<string, number | null>; cost_usd: number; latency_ms: number; model: string } | null; trace?: Record<string, { rule: string; voters: Record<string, number | null>; used: string | string[]; after_merge?: number }> };
 
@@ -24,6 +25,7 @@ const thinking: Record<string, string[]> = {
   ifc_models: ['Routing question → template bank', 'Opening the IFC model with ifcopenshell', 'Querying building elements', 'Exact BIM facts · no model needed', 'Linking the answer to its element'],
 };
 
+const ifcClassOf = (a: Answer | null) => a?.model_fact?.element?.startsWith('Ifc') ? a.model_fact.element : a?.explanation?.match(/Ifc[A-Z][A-Za-z]+/)?.[0] || null;
 const money = (v: number) => v === 0 ? '$0' : v < 0.001 ? `$${v.toFixed(5)}` : v < 1 ? `$${v.toFixed(4)}` : `$${v.toFixed(2)}`;
 
 function useCountUp(target: number, ms: number, key: unknown) {
@@ -91,6 +93,7 @@ function App() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
+  const [mode3d, setMode3d] = useState(false);
   const [view, setView] = useState<'demo' | 'aecv'>('demo');
   const [aecv, setAecv] = useState<Record<string, AecvPlan>>({});
   const [aecvPlan, setAecvPlan] = useState('2000-0011');
@@ -107,7 +110,7 @@ function App() {
   useEffect(() => { fetch('/api/aecv/plans').then(r => r.ok ? r.json() : fetch('/aecv/plans.json').then(x => x.json())).then(setAecv).catch(() => {}); }, []);
   useEffect(() => {
     if (!selected) return;
-    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]);
+    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setMode3d(false);
     fetch(`/api/examples?path=${encodeURIComponent(selected.path)}`).then(r => r.ok ? r.json() : { examples: [] }).then(d => setExamples(d.examples || []));
     fetch(`/api/meta?path=${encodeURIComponent(selected.path)}`).then(r => r.json()).then(d => { if (d.width) setSize({ width: d.width, height: d.height }); });
   }, [selected]);
@@ -131,6 +134,11 @@ function App() {
   const liveCount = isCount && evidence.length ? Math.max(0, shown - rejectedMain.filter(i => i < shown).length) : null;
   const numeric = typeof answer?.value === 'number' ? answer.value as number : Number.NaN;
   const rolled = useCountUp(Number.isFinite(numeric) ? numeric : 0, 1500, answerKey);
+  const labelSize = useMemo(() => {
+    const dims = evidence.map(e => Math.min(e.bbox[2] - e.bbox[0], e.bbox[3] - e.bbox[1]) * unitScaleX).sort((a, b) => a - b);
+    const med = dims.length ? dims[Math.floor(dims.length / 2)] : rendered.width / 40;
+    return Math.max(rendered.width / 110, Math.min(rendered.width / 30, med * 1.4));
+  }, [evidence, unitScaleX, rendered.width]);
   const thinkLines = thinking[selected?.source || 'cubicasa5k'] || thinking.cubicasa5k;
 
   const ask = async (q: string = question): Promise<Answer | null> => {
@@ -141,6 +149,7 @@ function App() {
       const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question: q }) });
       const result: Answer = await response.json(); await minWait;
       setAnswer(result); setAnswerKey(k => k + 1); setTimeout(loadStats, 1500);
+      if (selected.source === 'ifc_models' && !result.abstained && !result.evidence?.length && ifcClassOf(result)) setMode3d(true);
       const img = imageRef.current;
       if (img && result.evidence?.length === 1) {
         const [x0, y0, x1, y1] = result.evidence[0].bbox;
@@ -163,7 +172,7 @@ function App() {
     ['Question', question.length > 34 ? question.slice(0, 32) + '…' : question, true],
     ['Router', route ? `${route.by} → ${route.to}` : 'template bank', true],
     ['Solver', `${answer.solver || '—'} · ${answer.cached ? 'cached' : answer.method || 'deterministic'}`, true],
-    ['Evidence', evidence.length ? `${Math.min(shown, evidence.length)} / ${evidence.length} regions` : answer.model_fact ? 'IFC element' : 'text layer', shown > 0 || !evidence.length],
+    ['Evidence', evidence.length ? `${Math.min(shown, evidence.length)} / ${evidence.length} regions` : ifcClassOf(answer) ? `IFC model · ${String(answer.value)} ${ifcClassOf(answer)}` : 'text layer', shown > 0 || !evidence.length],
     ['Answer', `${String(answer.value)} ${answer.unit && answer.unit !== 'count' ? answer.unit : ''}`, revealDone],
   ] : [];
 
@@ -173,6 +182,8 @@ function App() {
     if (!hit) return `No drawing matches "${query}". Available: ${drawings.map(d => d.title).join(', ')}`;
     setView('demo'); setSelected(hit); return `Opened ${hit.title} (${sourceNames[hit.source] || hit.source}).`;
   };
+  const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null };
+  const can3d = selected?.source === 'swiss_dwellings' || selected?.source === 'ifc_models';
   const voiceContext = selected ? `${selected.title} (${sourceNames[selected.source] || selected.source}${selected.is_model ? ', 3D IFC model' : ''}). Example question: ${examples[0] || selected.sample_question || ''}` : 'none';
 
   // ---------- AECV benchmark view ----------
@@ -256,16 +267,16 @@ function App() {
       <section className="panel stage-panel main-stage">
         <div className="stage-head">
           <div><span className="kicker">{selected?.is_model ? 'IFC model · BIM facts' : 'Sheet viewer'}</span><h3>{selected?.title || 'Loading drawings…'}</h3></div>
-          <div className="zoom">{selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
+          <div className="zoom">{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => setMode3d(true)}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
         </div>
         <div className={`canvas ${busy ? "busy" : ""} ${evidence.length ? "has-ev" : ""}`} ref={canvasRef} onPointerDown={e => { if (zoom > 1 && (e.target as Element).tagName !== 'rect') { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
-          {(liveCount !== null || (answer && !answer.abstained && Number.isFinite(numeric))) && <div className="stage-counter"><span>{answer?.unit && answer.unit !== 'count' ? answer.unit : 'count'}</span><b className={revealDone ? 'done' : ''}>{liveCount !== null ? liveCount : Number.isInteger(numeric) ? Math.round(rolled) : rolled.toFixed(2)}</b></div>}
+          {!mode3d && (liveCount !== null || (answer && !answer.abstained && Number.isFinite(numeric) && !isCount)) && <div className="stage-counter"><span>{answer?.unit && answer.unit !== 'count' ? answer.unit : 'count'}</span><b className={revealDone ? 'done' : ''}>{liveCount !== null ? liveCount : Number.isInteger(numeric) ? Math.round(rolled) : rolled.toFixed(2)}</b></div>}
           {busy && <div className="think">{thinkLines.slice(0, Math.min(thinkLines.length, thinkStep + 1)).map((l, i) => <div key={i} className={i === Math.min(thinkLines.length - 1, thinkStep) ? 'cur' : 'past'}><i>{i === Math.min(thinkLines.length - 1, thinkStep) ? '◌' : '✓'}</i>{l}</div>)}</div>}
-          {selected?.is_model && !evidence.length ? <div className="model-card"><span className="model-icon">⬢</span><h3>BIM model fact</h3>{answer?.model_fact ? <dl><dt>Element</dt><dd>{answer.model_fact.element}{answer.model_fact.element_name ? ` · ${answer.model_fact.element_name}` : ''}</dd><dt>GlobalId</dt><dd>{answer.model_fact.guid || 'Model aggregate'}</dd><dt>Property</dt><dd>{answer.model_fact.property}: {String(answer.model_fact.value)}</dd></dl> : <p>This is a 3D building model. Ask a question to see the exact element, GlobalId and property behind the answer.</p>}</div>
+          {mode3d && selected ? <Scene3D path={selected.path} hl={hl3d} k={answerKey} /> : selected?.is_model && !evidence.length ? <div className="model-card"><span className="model-icon">⬢</span><h3>BIM model fact</h3>{answer?.model_fact ? <dl><dt>Element</dt><dd>{answer.model_fact.element}{answer.model_fact.element_name ? ` · ${answer.model_fact.element_name}` : ''}</dd><dt>GlobalId</dt><dd>{answer.model_fact.guid || 'Model aggregate'}</dd><dt>Property</dt><dd>{answer.model_fact.property}: {String(answer.model_fact.value)}</dd></dl> : <p>This is a 3D building model. Ask a question to see the exact element, GlobalId and property behind the answer.</p>}</div>
             : selected && <div className="sheet-transform" style={{ transform: `translate(${offset.x}px,${offset.y}px) scale(${zoom})` }}>
               <img ref={imageRef} className="sheet-image" src={imageUrl} onLoad={e => setRendered({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight })} alt="Selected architectural drawing" />
               {busy && <div className="scanline" />}
-              {evidence.length > 0 && <svg className={`evidence-layer ${revealDone ? '' : 'revealing'}`} viewBox={`0 0 ${rendered.width} ${rendered.height}`} preserveAspectRatio="none" style={{ fontSize: Math.max(14, rendered.width / 28) }}>
+              {evidence.length > 0 && <svg className={`evidence-layer ${revealDone ? '' : 'revealing'}`} viewBox={`0 0 ${rendered.width} ${rendered.height}`} preserveAspectRatio="none" style={{ fontSize: labelSize }}>
                 {evidence.slice(0, shown).map((ev, i) => { const rej = rejectedMain.includes(i); const lbl = isCount ? (rej ? '✕' : String(i + 1 - rejectedMain.filter(j => j < i).length)) : (ev.label || `Evidence ${i + 1}`); const x0 = ev.bbox[0] * unitScaleX, y0 = ev.bbox[1] * unitScaleY, w = (ev.bbox[2] - ev.bbox[0]) * unitScaleX, h = (ev.bbox[3] - ev.bbox[1]) * unitScaleY;
                   return <g key={i} className={`ev ${rej ? 'rejected' : ''}`} onClick={() => isCount && setRejectedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i])}>
                     {ev.polygon?.length ? <><polygon className="ring" points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /><polygon points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /></> : <><rect className="ring" x={x0} y={y0} width={w} height={h} /><rect className="under" x={x0} y={y0} width={w} height={h} /><rect x={x0} y={y0} width={w} height={h} /></>}
@@ -273,6 +284,7 @@ function App() {
               </svg>}
             </div>}
         </div>
+        {can3d && !mode3d && answer && !answer.abstained && (answer.scene_kind || ifcClassOf(answer)) && revealDone && <button className="lift-cta" onClick={() => setMode3d(true)}>⬆ See these {answer.scene_kind ? answer.scene_kind : 'elements'} light up in 3D</button>}
         {pipeline.length > 0 && <div className="pipeline" key={answerKey}>{pipeline.map(([k, v, on], i) => <div key={k} className={`step ${on ? 'on' : ''}`} style={{ animationDelay: `${i * 0.12}s` }}><span>{k}</span><b>{v}</b></div>)}</div>}
         <div className="stage-foot"><span>{evidence.length ? <>{evidence.length} evidence region{evidence.length === 1 ? '' : 's'}{isCount ? ' · tap a box to reject it' : ''}{!revealDone && <button className="link" onClick={skipReveal}>skip replay</button>}</> : 'Evidence is drawn on the sheet after an answer'}</span><span>drag to pan · ctrl + scroll to zoom</span></div>
         {evidence.some(e => e.crop_url) && revealDone && <div className="gallery"><div className="gallery-head"><span className="kicker">Evidence crops · zoomed by Cloudinary</span>{answer?.share_url && <a href={answer.share_url} target="_blank" rel="noreferrer">Share evidence sheet ↗</a>}</div><div className="gallery-row">{evidence.filter(e => e.crop_url).slice(0, 12).map((e, i) => <a key={i} href={e.crop_url!} target="_blank" rel="noreferrer" title={e.label || `region ${i + 1}`} style={{ animationDelay: `${i * 0.05}s` }}><img src={e.crop_url!} alt={e.label || `evidence ${i + 1}`} loading="lazy" /></a>)}</div></div>}

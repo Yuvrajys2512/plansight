@@ -300,3 +300,18 @@ button { font: inherit; color: inherit; }
 .voice-lines p.ai b { color: var(--lime); }
 .voice-actions { display: flex; justify-content: center; margin-top: 12px; }
 @media (max-width: 860px) { .voice-panel { left: 12px; right: 12px; width: auto; bottom: 12px; } .voice-fab { right: 12px; bottom: 12px; } }
+
+/* ---------- 3D ---------- */
+.seg { display: flex; padding: 3px; border: 1px solid var(--line2); border-radius: 9px; background: #05080d; margin-right: 6px; }
+.zoom .seg button { border: 0; background: none; height: 26px; color: var(--muted); }
+.zoom .seg button.on { background: #ffffff12; color: var(--text); }
+.zoom .seg button.lift.on { background: var(--lime); color: #071006; font-weight: 700; }
+.scene3d { position: absolute; inset: 0; }
+.scene3d canvas { display: block; }
+.scene-msg { position: absolute; inset: 0; display: grid; place-items: center; font: 500 12px var(--mono); color: var(--muted); }
+.scene-hint { position: absolute; left: 16px; bottom: 12px; font: 500 10.5px var(--mono); color: var(--muted); background: #05080dcc; padding: 5px 9px; border-radius: 7px; pointer-events: none; }
+.scene-counter { pointer-events: none; }
+.tag3d { white-space: nowrap; font: 700 12px var(--display); color: #071006; background: var(--lime); padding: 3px 8px; border-radius: 6px; box-shadow: 0 4px 14px #0008; animation: rise .3s both; pointer-events: none; }
+.tag3d small { display: block; font: 600 10px var(--mono); opacity: .75; }
+.lift-cta { display: block; width: calc(100% - 32px); margin: 12px 16px 0; padding: 12px; border-radius: 12px; border: 1px dashed #c8ff3d88; background: var(--lime-dim); color: var(--lime); font: 700 13px var(--display); cursor: pointer; animation: rise .4s both; }
+.lift-cta:hover { background: #c8ff3d33; }
