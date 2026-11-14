@@ -32,13 +32,23 @@ image = (
 )
 
 app = modal.App("plansight", image=image)
+# runs/ (feedback.jsonl from the click-to-reject UI) survives container restarts:
+#   python -m modal volume get plansight-runs feedback.jsonl .
+runs = modal.Volume.from_name("plansight-runs", create_if_missing=True)
 
 
 @app.function(cpu=2.0, memory=4096, timeout=300, min_containers=1 if os.getenv("KEEP_WARM") == "1" else 0,
-              scaledown_window=600)
+              scaledown_window=600, volumes={"/root/runs": runs})
 @modal.concurrent(max_inputs=16)
 @modal.asgi_app(label="plansight")
 def web():
     from plansight.api.app import app as fastapi_app
+
+    @fastapi_app.middleware("http")
+    async def commit_runs(request, call_next):  # persist each feedback write to the volume
+        resp = await call_next(request)
+        if request.url.path == "/api/feedback":
+            runs.commit()
+        return resp
 
     return fastapi_app
