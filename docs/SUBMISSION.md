@@ -30,7 +30,12 @@ the count updates live. A human verifies the answer in seconds, and every correc
   training data (CubiCasa5K), so we drop them for every system. On the clean held-out split PlanSight averages **62%** vs
   Gemini 3.5 Flash 68%, Claude Fable 5 67%, GPT-5.5 63%, at **$0.0005 per plan, 60–450× cheaper**, with every count boxed.
   It doesn't beat frontier yet (Gemini 3 Pro gets 47% on doors vs our 39%), and we say so.
-- Overnight we tried five ways to close that gap (rule tuning, SAHI tiling, a wall check, a detector retrained on Verda
+- **Cheap first, escalate when unsure.** PlanSight knows when it's unsure (borderline symbols, readers disagreeing) and
+  sends only those plans to Gemini 3.5 Flash, for only the unsure kinds. On the held-out split this beats **every
+  published frontier model on doors (48% vs 47%) and windows (43% vs 38%)**, ties the best mean (65%), and costs less
+  than Gemini alone. Clean split: doors 49%, windows 47%. (Escalated answers are AECV's published Gemini 3.5 Flash
+  answers for the same prompt; our live call is wired up but the free tier ran out before a full live re-run.)
+- Before that, we tried five ways to close the gap (rule tuning, SAHI tiling, a wall check, a detector retrained on Verda
   with tiles + style augmentation, an ensemble). Each was tuned on one half of the benchmark and judged on the other.
   None held up, so none shipped. The full log is in the repo.
 
@@ -98,4 +103,4 @@ with dirty hands. The browser gets a short-lived WebRTC token from our server; t
 | Cloudinary | ✅ | evidence crops + shareable evidence sheet via URL transforms. **Fill cld.media/hackathon-survey** |
 | Modal | ✅ | hosts the public demo |
 | ElevenLabs | ✅ | voice mode live (`/api/voice/token` returns 200) |
-| Gemini API | ❌ **untick** | only used as the transport to reach Gemma and as the LLM inside the voice agent; not a distinct job |
+| Gemini API | ⚠️ your call | now has a distinct job: escalation partner when PlanSight is unsure (`plansight/escalate.py`), the headline held-out result. But the measured numbers use AECV's published Gemini answers; only 22 of our own live calls ran (free-tier cap). Keep it if you're comfortable saying exactly that; untick if you want zero ambiguity |

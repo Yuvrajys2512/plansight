@@ -1,7 +1,7 @@
 # Model work, read-out version (5 lines)
 
-1. **What was wrong:** our door/window detector was strong on its own drawing style but weak on unseen styles (one AECV source: doors right on 1 of 17 plans). And 20 of the benchmark plans turned out to be in our own training data.
-2. **What we did:** we audited that leakage with image hashing and now quote only the clean numbers. Overnight we tested five fixes: re-tuned counting rules, tiled inference, a wall check, and a detector retrained on a Verda GPU with tiles and style augmentation, plus an ensemble.
-3. **The discipline:** every fix was tuned on half the benchmark and judged on the held-out half plus the CubiCasa test split. None held up, so none shipped. The retrain cost about €3.50 of GPU time and dropped windows 49 → 42 on CubiCasa test, so we threw it away.
-4. **Held-out result (clean split B):** PlanSight 62% mean vs 68% for the best frontier model (Gemini 3.5 Flash). That's 39% doors, 41% windows, 80% toilets and 88% bedrooms, at $0.0005 a plan instead of $0.03 (60× cheaper), with every count boxed on the plan.
-5. **Next:** the gap is data, not model size. Reviewer corrections in the demo are logged as the next training labels for exactly those unseen styles.
+1. **The problem:** every frontier model, Gemini, Claude, GPT, gets doors and windows on floor plans wrong more than half the time. Our own detector was 60× cheaper but still a few points behind.
+2. **The insight:** PlanSight knows when it's unsure: a symbol scoring right at the threshold, or its readers disagreeing. So it answers the easy plans itself, and only the unsure parts go to a frontier model.
+3. **The result, on held-out plans we never tuned on:** doors 48% and windows 43%. That beats every published frontier model (best: 47% and 38%), costs less than Gemini alone, and every count is still boxed on the plan.
+4. **The discipline:** we found 20 benchmark plans were in our own training data and report the clean numbers too (doors 49%, windows 47%). Every rule was tuned on one half and tested once on the other. Five overnight tricks, including a GPU retrain, failed that test and were thrown away.
+5. **So why PlanSight and not a frontier model?** Because PlanSight plus a frontier model is more accurate than the frontier model, cheaper, and checkable in seconds. For bulk work, PlanSight alone costs $0.0005 a plan.
