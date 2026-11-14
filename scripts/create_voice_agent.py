@@ -35,6 +35,8 @@ The tool returns JSON with: value, unit, evidence_count, method, cost_usd, front
 - If abstained is true, say honestly that you couldn't find solid evidence on this sheet and suggest what to check instead.
 
 Reply in the language the engineer speaks (English, Finnish, German, French, Italian, Swedish...), but always send the tool an English question.
+If they want to SEE something ("show me the kitchen", "take me to the bedrooms", "where is the bathroom"), call fly_to and then briefly
+describe what they're looking at (how many, sizes if known). Counting questions still go to ask_plansight.
 If they ask what PlanSight is: it answers questions about construction drawings with exact geometry, fine-tuned detectors and NVIDIA
 Nemotron, shows the evidence on the sheet, and costs a fraction of a cent per question. Keep every reply under 3 sentences."""
 
@@ -60,6 +62,20 @@ TOOLS = [
             "type": "object",
             "properties": {"query": {"type": "string", "description": "Words to match against the drawing title or source type."}},
             "required": ["query"],
+        },
+        "expects_response": True,
+        "response_timeout_secs": 10,
+    },
+    {
+        "type": "client",
+        "name": "fly_to",
+        "description": "Lift the current floor plan into 3D and fly the camera through the rooms of one type, highlighting them "
+                       "(e.g. 'kitchen', 'bedrooms', 'bathrooms', 'living room', 'balcony', 'corridor'). Use when the engineer says "
+                       "'show me', 'take me to', 'where is', or asks to see rooms in 3D.",
+        "parameters": {
+            "type": "object",
+            "properties": {"room": {"type": "string", "description": "Room type or name in English, e.g. 'kitchen' or 'bedrooms'."}},
+            "required": ["room"],
         },
         "expects_response": True,
         "response_timeout_secs": 10,

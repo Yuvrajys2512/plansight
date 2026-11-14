@@ -2,11 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import { useConversation } from '@elevenlabs/react';
 
 type Ans = { value?: unknown; unit?: string | null; evidence?: unknown[]; method?: string; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; explanation?: string } | null;
-type Props = { ask: (q: string) => Promise<Ans>; openDrawing: (query: string) => string; context: string };
+type Props = { ask: (q: string) => Promise<Ans>; openDrawing: (query: string) => string; flyTo: (room: string) => string; context: string };
 type Line = { who: 'you' | 'ai'; text: string; id: number };
 
 /** "Talk to the drawing": ElevenLabs voice agent whose tools drive the same /api/ask pipeline and evidence replay. */
-export default function Voice({ ask, openDrawing, context }: Props) {
+export default function Voice({ ask, openDrawing, flyTo, context }: Props) {
   const [open, setOpen] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
   const [tool, setTool] = useState<string | null>(null);
@@ -15,6 +15,7 @@ export default function Voice({ ask, openDrawing, context }: Props) {
   const seq = useRef(0);
   const askRef = useRef(ask); askRef.current = ask;
   const openRef = useRef(openDrawing); openRef.current = openDrawing;
+  const flyRef = useRef(flyTo); flyRef.current = flyTo;
 
   const conv = useConversation({
     clientTools: {
@@ -26,6 +27,7 @@ export default function Voice({ ask, openDrawing, context }: Props) {
         return JSON.stringify({ value: a.value, unit: a.unit, evidence_count: a.evidence?.length ?? 0, method: a.method, cost_usd: a.cost_usd, frontier_cost_usd: a.naive_cost_usd, abstained: !!a.abstained, reason: a.reason, explanation: a.explanation });
       },
       open_drawing: ({ query }: { query?: string }) => openRef.current(String(query || '')),
+      fly_to: ({ room }: { room?: string }) => { setTool(`flying to ${room}`); setTimeout(() => setTool(null), 2500); return flyRef.current(String(room || '')); },
     },
     onMessage: (m: { message?: string; source?: string; role?: string }) => {
       const who = (m.role || m.source) === 'user' ? 'you' : 'ai';

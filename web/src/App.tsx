@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
 import Voice from './Voice';
-import Scene3D, { type Highlight } from './Scene3D';
+import Scene3D, { type FlyRequest, type Highlight, type RoomInfo } from './Scene3D';
+import { sfx } from './sfx';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
@@ -60,8 +61,9 @@ function CostRace({ cost, naive, k, label = 'naive frontier model, full sheet', 
   </div>;
 }
 
-function Intro({ onEnter, onBench }: { onEnter: () => void; onBench: () => void }) {
+function Intro({ onEnter, onBench, stats }: { onEnter: () => void; onBench: () => void; stats: Stats | null }) {
   const pct = useCountUp(43, 1600, 'intro');
+  const saved = useCountUp(Math.max(0, (stats?.naive_cost_usd ?? 0) - (stats?.cost_usd ?? 0)), 2200, stats?.questions);
   return <div className="intro">
     <div className="intro-grid" />
     <div className="intro-inner">
@@ -69,6 +71,7 @@ function Intro({ onEnter, onBench }: { onEnter: () => void; onBench: () => void 
       <h1>The best AI model in the world counts the doors on a floor plan correctly <span className="hot">{Math.round(pct)}%</span> of the time.</h1>
       <p>Bigger models won't fix that. It's a perception problem, not a reasoning one. <b>PlanSight</b> answers questions about construction drawings with fine-tuned detectors, exact geometry and NVIDIA Nemotron, <b>shows you every item it counted</b>, and costs a fraction of a cent.</p>
       <div className="intro-stats"><div><b>62%</b><span>PlanSight on unseen plans<br />(best frontier: 65%)</span></div><div><b>1/60</b><span>of the cost of the<br />cheapest frontier model</span></div><div><b>99.5%</b><span>on Stoa's vector plans<br />and IFC models, $0</span></div></div>
+      {stats?.enabled && (stats.questions ?? 0) > 0 && <div className="intro-live"><i className="pulse" />Live at Junction: <b>{(stats.questions ?? 0).toLocaleString()}</b> questions answered by visitors · <b>{money(stats.cost_usd ?? 0)}</b> spent · <b className="saved">{money(saved)}</b> saved vs a frontier model <em>Aiven Postgres</em></div>}
       <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Ask a drawing →</button><button className="btn-ghost" onClick={onBench}>Race the frontier models</button></div>
     </div>
   </div>;
@@ -94,6 +97,8 @@ function App() {
   const [drag, setDrag] = useState<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
   const [mode3d, setMode3d] = useState(false);
+  const [fly, setFly] = useState<FlyRequest>(null);
+  const roomsRef = useRef<RoomInfo[]>([]);
   const [view, setView] = useState<'demo' | 'aecv'>('demo');
   const [aecv, setAecv] = useState<Record<string, AecvPlan>>({});
   const [aecvPlan, setAecvPlan] = useState('2000-0011');
@@ -139,17 +144,21 @@ function App() {
     const med = dims.length ? dims[Math.floor(dims.length / 2)] : rendered.width / 40;
     return Math.max(rendered.width / 110, Math.min(rendered.width / 30, med * 1.4));
   }, [evidence, unitScaleX, rendered.width]);
+  useEffect(() => { if (shown > 0 && shown <= evidence.length) sfx.tick(shown); if (shown > 0 && shown === evidence.length) setTimeout(() => sfx.stamp(), 180); }, [shown]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (answer && !answer.abstained && !evidence.length && !mode3d) setTimeout(() => sfx.stamp(), 300); }, [answerKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [muted, setMutedState] = useState(sfx.isMuted());
+  useEffect(() => sfx.subscribe(setMutedState), []);
   const thinkLines = thinking[selected?.source || 'cubicasa5k'] || thinking.cubicasa5k;
 
   const ask = async (q: string = question): Promise<Answer | null> => {
     if (!selected || !q.trim() || busy) return null;
-    setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]);
+    sfx.scan(); setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]);
     const minWait = new Promise(r => setTimeout(r, 1300)); // let the "thinking" trace play even on $0 instant answers
     try {
       const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question: q }) });
       const result: Answer = await response.json(); await minWait;
       setAnswer(result); setAnswerKey(k => k + 1); setTimeout(loadStats, 1500);
-      if (selected.source === 'ifc_models' && !result.abstained && !result.evidence?.length && ifcClassOf(result)) setMode3d(true);
+      if (selected.source === 'ifc_models' && !result.abstained && !result.evidence?.length && ifcClassOf(result)) { sfx.whoosh(); setMode3d(true); }
       const img = imageRef.current;
       if (img && result.evidence?.length === 1) {
         const [x0, y0, x1, y1] = result.evidence[0].bbox;
@@ -184,6 +193,13 @@ function App() {
   };
   const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null };
   const can3d = selected?.source === 'swiss_dwellings' || selected?.source === 'ifc_models';
+  const flyTo = (room: string) => {
+    if (!selected || selected.source !== 'swiss_dwellings') return 'Fly-through works on the Swiss floor plans. Open one first (for example: open the Swiss plan).';
+    if (!mode3d) { sfx.whoosh(); setMode3d(true); }
+    setFly({ query: room, key: Date.now() });
+    const known = roomsRef.current.map(r => r.name);
+    return known.length ? `Flying through the 3D model to: ${room}. Rooms on this floor: ${[...new Set(known)].join(', ')}.` : `Lifting the plan into 3D and flying to: ${room}.`;
+  };
   const voiceContext = selected ? `${selected.title} (${sourceNames[selected.source] || selected.source}${selected.is_model ? ', 3D IFC model' : ''}). Example question: ${examples[0] || selected.sample_question || ''}` : 'none';
 
   // ---------- AECV benchmark view ----------
@@ -192,8 +208,9 @@ function App() {
   const [aShown, aSkip] = useReveal(kindData.evidence.length, `${aecvPlan}-${aecvKind}-${view}`, 2400);
   const activeCount = Math.max(0, Math.min(aShown, kindData.count) - rejected.filter(i => i < aShown).length + added.length);
   const aDone = aShown >= kindData.evidence.length;
+  useEffect(() => { if (view !== 'aecv') return; if (aShown > 0 && aShown <= kindData.evidence.length) sfx.tick(aShown); if (aShown > 0 && aShown === kindData.evidence.length) setTimeout(() => sfx.stamp(), 180); }, [aShown]); // eslint-disable-line react-hooks/exhaustive-deps
   const postFeedback = (bbox: number[], action: string) => { void fetch('/api/feedback', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ plan: aecvPlan, kind: aecvKind, bbox, action }) }); };
-  const toggleBox = (index: number) => { const box = kindData.evidence[index]?.bbox; if (!box) return; const reject = !rejected.includes(index); setRejected(v => reject ? [...v, index] : v.filter(x => x !== index)); postFeedback(box, reject ? 'reject' : 'add'); };
+  const toggleBox = (index: number) => { const box = kindData.evidence[index]?.bbox; if (!box) return; const reject = !rejected.includes(index); if (reject) sfx.reject(); setRejected(v => reject ? [...v, index] : v.filter(x => x !== index)); postFeedback(box, reject ? 'reject' : 'add'); };
   const addBox = (e: React.MouseEvent<HTMLDivElement>) => { if (!addMode || !aecvImage.current) return; const el = aecvImage.current, r = el.getBoundingClientRect(), sx = (plan?.image_width || el.naturalWidth) / r.width, sy = (plan?.image_height || el.naturalHeight) / r.height, x = (e.clientX - r.left) * sx, y = (e.clientY - r.top) * sy; const b: [number, number, number, number] = [Math.max(0, x - 18), Math.max(0, y - 18), x + 18, y + 18]; setAdded(v => [...v, b]); postFeedback(b, 'add'); setAddMode(false); };
   const pickRandomPlan = () => { const ids = Object.keys(aecv).filter(id => aecv[id].split === 'B'); if (ids.length) { setAecvPlan(ids[Math.floor(Math.random() * ids.length)]); setRejected([]); setAdded([]); } };
   const frontierRows = plan ? Object.entries(plan.frontier).map(([m, a]) => ({ m, v: a[aecvKind], cost: plan.frontier_cost_usd[m] })).sort((x, y) => (y.cost ?? 0) - (x.cost ?? 0)) : [];
@@ -204,10 +221,11 @@ function App() {
   const header = <header className="topbar">
     <button className="brand" onClick={() => setIntro(true)}><span className="brandmark">◎</span><span><b>PlanSight</b><small>make blueprints talk</small></span></button>
     <nav className="tabs"><button className={view === 'demo' ? 'on' : ''} onClick={() => setView('demo')}>Ask a drawing</button><button className={view === 'aecv' ? 'on' : ''} onClick={() => setView('aecv')}>Frontier vs PlanSight</button></nav>
+    <button className="mute" title={muted ? 'Sound off' : 'Sound on'} onClick={() => sfx.setMuted(!muted)}>{muted ? '🔇' : '🔊'}</button>
     <div className="ticker">{stats?.enabled && stats.questions ? <><i className="pulse" /><b>{stats.questions.toLocaleString()}</b> questions · <b>{money(stats.cost_usd ?? 0)}</b> spent vs <b>{money(stats.naive_cost_usd ?? 0)}</b> frontier · <b>{stats.corrections ?? 0}</b> corrections <em>Aiven Postgres</em></> : <><i className="pulse" />live · CPU · scales to zero</>}</div>
   </header>;
 
-  if (intro) return <Intro onEnter={() => { setIntro(false); setView('demo'); }} onBench={() => { setIntro(false); setView('aecv'); }} />;
+  if (intro) return <Intro stats={stats} onEnter={() => { sfx.whoosh(); setIntro(false); setView('demo'); }} onBench={() => { sfx.whoosh(); setIntro(false); setView('aecv'); }} />;
 
   if (view === 'aecv') return <main className="shell">{header}
     <section className="scoreboard">
@@ -267,24 +285,24 @@ function App() {
       <section className="panel stage-panel main-stage">
         <div className="stage-head">
           <div><span className="kicker">{selected?.is_model ? 'IFC model · BIM facts' : 'Sheet viewer'}</span><h3>{selected?.title || 'Loading drawings…'}</h3></div>
-          <div className="zoom">{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => setMode3d(true)}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
+          <div className="zoom">{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => { if (!mode3d) sfx.whoosh(); setMode3d(true); }}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
         </div>
         <div className={`canvas ${busy ? "busy" : ""} ${evidence.length ? "has-ev" : ""}`} ref={canvasRef} onPointerDown={e => { if (zoom > 1 && (e.target as Element).tagName !== 'rect') { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
           {!mode3d && (liveCount !== null || (answer && !answer.abstained && Number.isFinite(numeric) && !isCount)) && <div className="stage-counter"><span>{answer?.unit && answer.unit !== 'count' ? answer.unit : 'count'}</span><b className={revealDone ? 'done' : ''}>{liveCount !== null ? liveCount : Number.isInteger(numeric) ? Math.round(rolled) : rolled.toFixed(2)}</b></div>}
           {busy && <div className="think">{thinkLines.slice(0, Math.min(thinkLines.length, thinkStep + 1)).map((l, i) => <div key={i} className={i === Math.min(thinkLines.length - 1, thinkStep) ? 'cur' : 'past'}><i>{i === Math.min(thinkLines.length - 1, thinkStep) ? '◌' : '✓'}</i>{l}</div>)}</div>}
-          {mode3d && selected ? <Scene3D path={selected.path} hl={hl3d} k={answerKey} /> : selected?.is_model && !evidence.length ? <div className="model-card"><span className="model-icon">⬢</span><h3>BIM model fact</h3>{answer?.model_fact ? <dl><dt>Element</dt><dd>{answer.model_fact.element}{answer.model_fact.element_name ? ` · ${answer.model_fact.element_name}` : ''}</dd><dt>GlobalId</dt><dd>{answer.model_fact.guid || 'Model aggregate'}</dd><dt>Property</dt><dd>{answer.model_fact.property}: {String(answer.model_fact.value)}</dd></dl> : <p>This is a 3D building model. Ask a question to see the exact element, GlobalId and property behind the answer.</p>}</div>
+          {mode3d && selected ? <Scene3D path={selected.path} hl={hl3d} k={answerKey} fly={fly} onRooms={r => { roomsRef.current = r; }} /> : selected?.is_model && !evidence.length ? <div className="model-card"><span className="model-icon">⬢</span><h3>BIM model fact</h3>{answer?.model_fact ? <dl><dt>Element</dt><dd>{answer.model_fact.element}{answer.model_fact.element_name ? ` · ${answer.model_fact.element_name}` : ''}</dd><dt>GlobalId</dt><dd>{answer.model_fact.guid || 'Model aggregate'}</dd><dt>Property</dt><dd>{answer.model_fact.property}: {String(answer.model_fact.value)}</dd></dl> : <p>This is a 3D building model. Ask a question to see the exact element, GlobalId and property behind the answer.</p>}</div>
             : selected && <div className="sheet-transform" style={{ transform: `translate(${offset.x}px,${offset.y}px) scale(${zoom})` }}>
               <img ref={imageRef} className="sheet-image" src={imageUrl} onLoad={e => setRendered({ width: e.currentTarget.naturalWidth, height: e.currentTarget.naturalHeight })} alt="Selected architectural drawing" />
               {busy && <div className="scanline" />}
               {evidence.length > 0 && <svg className={`evidence-layer ${revealDone ? '' : 'revealing'}`} viewBox={`0 0 ${rendered.width} ${rendered.height}`} preserveAspectRatio="none" style={{ fontSize: labelSize }}>
                 {evidence.slice(0, shown).map((ev, i) => { const rej = rejectedMain.includes(i); const lbl = isCount ? (rej ? '✕' : String(i + 1 - rejectedMain.filter(j => j < i).length)) : (ev.label || `Evidence ${i + 1}`); const x0 = ev.bbox[0] * unitScaleX, y0 = ev.bbox[1] * unitScaleY, w = (ev.bbox[2] - ev.bbox[0]) * unitScaleX, h = (ev.bbox[3] - ev.bbox[1]) * unitScaleY;
-                  return <g key={i} className={`ev ${rej ? 'rejected' : ''}`} onClick={() => isCount && setRejectedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i])}>
+                  return <g key={i} className={`ev ${rej ? 'rejected' : ''}`} onClick={() => { if (!isCount) return; if (!rejectedMain.includes(i)) sfx.reject(); setRejectedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i]); }}>
                     {ev.polygon?.length ? <><polygon className="ring" points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /><polygon points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /></> : <><rect className="ring" x={x0} y={y0} width={w} height={h} /><rect className="under" x={x0} y={y0} width={w} height={h} /><rect x={x0} y={y0} width={w} height={h} /></>}
                     <text x={x0} y={Math.max(rendered.width / 50, y0 - rendered.width / 200)}>{lbl}</text></g>; })}
               </svg>}
             </div>}
         </div>
-        {can3d && !mode3d && answer && !answer.abstained && (answer.scene_kind || ifcClassOf(answer)) && revealDone && <button className="lift-cta" onClick={() => setMode3d(true)}>⬆ See these {answer.scene_kind ? answer.scene_kind : 'elements'} light up in 3D</button>}
+        {can3d && !mode3d && answer && !answer.abstained && (answer.scene_kind || ifcClassOf(answer)) && revealDone && <button className="lift-cta" onClick={() => { sfx.whoosh(); setMode3d(true); }}>⬆ See these {answer.scene_kind ? answer.scene_kind : 'elements'} light up in 3D</button>}
         {pipeline.length > 0 && <div className="pipeline" key={answerKey}>{pipeline.map(([k, v, on], i) => <div key={k} className={`step ${on ? 'on' : ''}`} style={{ animationDelay: `${i * 0.12}s` }}><span>{k}</span><b>{v}</b></div>)}</div>}
         <div className="stage-foot"><span>{evidence.length ? <>{evidence.length} evidence region{evidence.length === 1 ? '' : 's'}{isCount ? ' · tap a box to reject it' : ''}{!revealDone && <button className="link" onClick={skipReveal}>skip replay</button>}</> : 'Evidence is drawn on the sheet after an answer'}</span><span>drag to pan · ctrl + scroll to zoom</span></div>
         {evidence.some(e => e.crop_url) && revealDone && <div className="gallery"><div className="gallery-head"><span className="kicker">Evidence crops · zoomed by Cloudinary</span>{answer?.share_url && <a href={answer.share_url} target="_blank" rel="noreferrer">Share evidence sheet ↗</a>}</div><div className="gallery-row">{evidence.filter(e => e.crop_url).slice(0, 12).map((e, i) => <a key={i} href={e.crop_url!} target="_blank" rel="noreferrer" title={e.label || `region ${i + 1}`} style={{ animationDelay: `${i * 0.05}s` }}><img src={e.crop_url!} alt={e.label || `evidence ${i + 1}`} loading="lazy" /></a>)}</div></div>}
@@ -307,7 +325,7 @@ function App() {
         <div className="note"><span>✦</span> Every answer is pinned to a region of the drawing you can check in seconds. If the evidence is weak, PlanSight abstains instead of guessing.</div>
       </aside>
     </div>
-    <Voice ask={ask} openDrawing={openDrawing} context={voiceContext} />
+    <Voice ask={ask} openDrawing={openDrawing} flyTo={flyTo} context={voiceContext} />
   </main>;
 }
 

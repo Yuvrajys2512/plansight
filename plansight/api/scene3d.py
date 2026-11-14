@@ -137,8 +137,12 @@ def ifc_scene(path: Path, glb_path: Path) -> dict:
     model = ifcopenshell.open(str(path))
     settings = geom.settings()
     settings.set("use-world-coords", True)
+    import ifcopenshell.util.element as uel
     scene = trimesh.Scene()
     elements = []
+    storeys = {}
+    for st in model.by_type("IfcBuildingStorey"):
+        storeys[st.GlobalId] = {"name": st.Name or "", "elevation": float(st.Elevation or 0.0)}
     for element in model.by_type("IfcProduct"):
         if not getattr(element, "Representation", None): continue
         try:
@@ -151,24 +155,29 @@ def ifc_scene(path: Path, glb_path: Path) -> dict:
             mesh.metadata.update({"guid":element.GlobalId,"ifc_class":element.is_a(),"name":element.Name or ""})
             name = f"{element.is_a()}_{element.GlobalId}"
             scene.add_geometry(mesh, node_name=name, geom_name=name)
-            elements.append({"guid":element.GlobalId,"ifc_class":element.is_a(),"name":element.Name or ""})
+            st = uel.get_container(element)
+            while st is not None and not st.is_a("IfcBuildingStorey"):
+                st = uel.get_aggregate(st) if hasattr(uel, "get_aggregate") else None
+            elements.append({"guid":element.GlobalId,"ifc_class":element.is_a(),"name":element.Name or "",
+                             "storey": st.Name if st is not None else None})
         except Exception:
             continue
     if not elements: raise ValueError("IFC produced no mesh geometry")
     glb_path.parent.mkdir(parents=True, exist_ok=True)
     glb_path.write_bytes(scene.export(file_type="glb"))
-    return {"kind":"ifc","units":"m","glb":glb_path.name,"elements":elements}
+    storey_list = sorted(storeys.values(), key=lambda s: s["elevation"])
+    return {"kind":"ifc","units":"m","glb":glb_path.name,"elements":elements,"storeys":storey_list}
 
 
 def build_scene(path: str, local: Path, *, ifc_model: Path | None = None) -> dict:
     json_path, glb_path = cache_paths(path)
     if json_path.is_file():
         cached = json.loads(json_path.read_text(encoding="utf-8"))
-        if cached.get("_scene_version") == 2 and (cached.get("kind") != "ifc" or glb_path.is_file()): return cached
+        if cached.get("_scene_version") == 3 and (cached.get("kind") != "ifc" or glb_path.is_file()): return cached
     CACHE.mkdir(parents=True, exist_ok=True)
     model_path = ifc_model or (local if local.suffix.lower() == ".ifc" else None)
     result = ifc_scene(model_path, glb_path) if model_path else swiss_scene(local)
-    result["_scene_version"] = 2
+    result["_scene_version"] = 3
     if result["kind"] == "ifc": result["glb"] = f"/api/scene3d/glb?path={path}"
     json_path.write_text(json.dumps(result, ensure_ascii=False, separators=(",",":")), encoding="utf-8")
     return result

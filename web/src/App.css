@@ -315,3 +315,20 @@ button { font: inherit; color: inherit; }
 .tag3d small { display: block; font: 600 10px var(--mono); opacity: .75; }
 .lift-cta { display: block; width: calc(100% - 32px); margin: 12px 16px 0; padding: 12px; border-radius: 12px; border: 1px dashed #c8ff3d88; background: var(--lime-dim); color: var(--lime); font: 700 13px var(--display); cursor: pointer; animation: rise .4s both; }
 .lift-cta:hover { background: #c8ff3d33; }
+.mute { margin-left: auto; border: 1px solid var(--line2); background: #ffffff06; border-radius: 9px; height: 32px; width: 36px; cursor: pointer; font-size: 14px; }
+.mute + .ticker { margin-left: 10px; }
+.intro-live { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -14px 0 28px; font: 500 12px var(--mono); color: var(--muted); animation: rise .8s .45s both; }
+.intro-live b { color: var(--text); } .intro-live b.saved { color: var(--lime); font-size: 14px; }
+.intro-live em { font-style: normal; color: var(--cyan); border: 1px solid var(--line2); border-radius: 6px; padding: 2px 6px; }
+.storey-tag { white-space: nowrap; font: 700 12px var(--mono); color: var(--text); background: #05080de6; border: 1px solid var(--line2); border-left: 3px solid var(--lime); padding: 5px 10px; border-radius: 8px; animation: rise .4s both; pointer-events: none; }
+.storey-tag b { color: var(--lime); font-size: 15px; margin-left: 6px; }
+.tag3d.cyan { background: var(--cyan); }
+.scene-counter.cyan b { color: var(--cyan) !important; text-shadow: 0 0 30px #3de0ff66 !important; }
+.tour-chips { position: absolute; top: 16px; right: 16px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; align-items: center; }
+.tour-chips span { font: 600 10px var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); margin-right: 2px; }
+.tour-chips button { border: 1px solid var(--line2); background: #05080dd9; color: var(--text); border-radius: 99px; padding: 6px 11px; font: 600 11.5px var(--display); cursor: pointer; backdrop-filter: blur(6px); }
+.tour-chips button i { font-style: normal; color: var(--muted); margin-left: 3px; font-family: var(--mono); }
+.tour-chips button:hover { border-color: var(--cyan); }
+.tour-chips button.on { background: var(--cyan); color: #04121a; border-color: var(--cyan); } .tour-chips button.on i { color: #04121a; }
+.scene3d .stage-counter, .tour-chips, .scene-hint { z-index: 20; }
+.tag3d { font-size: 11px; padding: 2px 7px; }
