@@ -80,7 +80,6 @@ def count(path: str, kind: str, verify: bool | None = None) -> Count | None:
     det = load(name) if name else None
     if det is None:
         return None
-    image = Image.open(resolve(path))
     dets, ms = _detect(name, path)
     thr = det.thresholds.get(kind, 0.4)
     mine = [d for d in dets if d.cls in classes]
@@ -92,6 +91,7 @@ def count(path: str, kind: str, verify: bool | None = None) -> Count | None:
         return Count(sure + [d for d in border if d.conf >= thr], border, [], thr, name, ms)
     from plansight.vlm.verify import adjudicate
 
+    image = Image.open(resolve(path)).convert("RGB")  # fully decoded: crops run in parallel threads
     votes, cost = adjudicate(image, border)
     return Count(sure + [d for d, ok in votes if ok], border, [d for d, ok in votes if not ok], thr, name, ms,
                  cost, True)
