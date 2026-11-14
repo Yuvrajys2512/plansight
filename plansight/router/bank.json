@@ -1,0 +1,1640 @@
+[
+ {
+  "domain": "swiss",
+  "regex": "^Quelle\\ est\\ la\\ surface\\ nette\\ totale\\ en\\ m²\\ de\\ toutes\\ les\\ pièces\\ intérieures\\ numérotées\\ de\\ cet\\ étage\\ \\(hors\\ balcons,\\ loggias,\\ terrasses\\ et\\ autres\\ espaces\\ extérieurs,\\ gaines\\ et\\ vides\\)\\ \\?$",
+  "template": "total_indoor_area",
+  "fixed": {},
+  "n": 247,
+  "example": "Quelle est la surface nette totale en m² de toutes les pièces intérieures numérotées de cet étage (hors balcons, loggias, terrasses et autres espaces extérieurs, gaines et vides) ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ gross\\ ist\\ die\\ gesamte\\ Nettogeschossfläche\\ in\\ m²\\ aller\\ nummerierten\\ Innenräume\\ dieses\\ Geschosses\\ \\(ohne\\ Balkone,\\ Loggien,\\ Terrassen\\ und\\ andere\\ Aussenräume,\\ Schächte\\ und\\ Lufträume\\)\\?$",
+  "template": "total_indoor_area",
+  "fixed": {},
+  "n": 698,
+  "example": "Wie gross ist die gesamte Nettogeschossfläche in m² aller nummerierten Innenräume dieses Geschosses (ohne Balkone, Loggien, Terrassen und andere Aussenräume, Schächte und Lufträume)?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Qual\\ è\\ la\\ superficie\\ netta\\ totale\\ in\\ m²\\ di\\ tutti\\ i\\ locali\\ interni\\ numerati\\ di\\ questo\\ piano\\ \\(esclusi\\ balconi,\\ logge,\\ terrazze\\ e\\ altri\\ spazi\\ esterni,\\ cavedi\\ e\\ vuoti\\)\\?$",
+  "template": "total_indoor_area",
+  "fixed": {},
+  "n": 95,
+  "example": "Qual è la superficie netta totale in m² di tutti i locali interni numerati di questo piano (esclusi balconi, logge, terrazze e altri spazi esterni, cavedi e vuoti)?",
+  "lang": "it"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quelle\\ est\\ la\\ surface\\ nette\\ de\\ l'appartement\\ (?P<letter>.+?)\\ en\\ m²\\ \\(somme\\ de\\ toutes\\ ses\\ pièces,\\ hors\\ balcons,\\ loggias,\\ terrasses\\ et\\ autres\\ espaces\\ extérieurs\\)\\ \\?$",
+  "template": "apartment_area",
+  "fixed": {},
+  "n": 450,
+  "example": "Quelle est la surface nette de l'appartement C en m² (somme de toutes ses pièces, hors balcons, loggias, terrasses et autres espaces extérieurs) ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Qual\\ è\\ la\\ superficie\\ netta\\ dell'appartamento\\ (?P<letter>.+?)\\ in\\ m²\\ \\(somma\\ di\\ tutti\\ i\\ locali,\\ esclusi\\ balconi,\\ logge,\\ terrazze\\ e\\ altri\\ spazi\\ esterni\\)\\?$",
+  "template": "apartment_area",
+  "fixed": {},
+  "n": 166,
+  "example": "Qual è la superficie netta dell'appartamento A in m² (somma di tutti i locali, esclusi balconi, logge, terrazze e altri spazi esterni)?",
+  "lang": "it"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ kylpy\\-\\ tai\\ pesuhuonetta\\ \\(esim\\.\\ KH,\\ KPH,\\ PH,\\ PESUH,\\ SH\\)\\ pohjapiirustuksessa\\ on,\\ erillisiä\\ WC\\-tiloja\\ lukuun\\ ottamatta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "bathroom"
+  },
+  "n": 2384,
+  "example": "Kuinka monta kylpy- tai pesuhuonetta (esim. KH, KPH, PH, PESUH, SH) pohjapiirustuksessa on, erillisiä WC-tiloja lukuun ottamatta?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ gross\\ ist\\ die\\ Nettowohnfläche\\ von\\ Wohnung\\ (?P<letter>.+?)\\ in\\ m²\\ \\(Summe\\ aller\\ Räume\\ ohne\\ Balkone,\\ Loggien,\\ Terrassen\\ und\\ andere\\ Aussenräume\\)\\?$",
+  "template": "apartment_area",
+  "fixed": {},
+  "n": 1259,
+  "example": "Wie gross ist die Nettowohnfläche von Wohnung B in m² (Summe aller Räume ohne Balkone, Loggien, Terrassen und andere Aussenräume)?",
+  "lang": "de"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ pesu\\-\\ ja\\ tiskiallasta\\ \\(keittiö\\ ja\\ kylpytilat\\ yhteensä;\\ kaksoisallas\\ lasketaan\\ yhdeksi\\)\\ pohjapiirustukseen\\ on\\ piirretty\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "sink"
+  },
+  "n": 4725,
+  "example": "Kuinka monta pesu- ja tiskiallasta (keittiö ja kylpytilat yhteensä; kaksoisallas lasketaan yhdeksi) pohjapiirustukseen on piirretty?",
+  "lang": "fi"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ ovea\\ pohjapiirustuksessa\\ on\\?\\ Laske\\ oviaukot,\\ joissa\\ on\\ ovi;\\ pelkkiä\\ oviaukkoja\\ ilman\\ ovilehteä\\ ei\\ lasketa\\.$",
+  "template": "count",
+  "fixed": {
+   "kind": "door"
+  },
+  "n": 3519,
+  "example": "Kuinka monta ovea pohjapiirustuksessa on? Laske oviaukot, joissa on ovi; pelkkiä oviaukkoja ilman ovilehteä ei lasketa.",
+  "lang": "fi"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ keittiötä\\ \\(myös\\ keittokomerot,\\ avo\\-\\ ja\\ tupakeittiöt\\ sekä\\ apukeittiöt\\)\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "kitchen"
+  },
+  "n": 3262,
+  "example": "Kuinka monta keittiötä (myös keittokomerot, avo- ja tupakeittiöt sekä apukeittiöt) pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ gross\\ ist\\ die\\ gesamte\\ Nettofläche\\ in\\ m²\\ aller\\ Räume\\ mit\\ der\\ Bezeichnung\\ «(?P<name>.+?)»\\ in\\ diesem\\ Geschoss\\?$",
+  "template": "total_area_named",
+  "fixed": {},
+  "n": 683,
+  "example": "Wie gross ist die gesamte Nettofläche in m² aller Räume mit der Bezeichnung «Schlafzimmer» in diesem Geschoss?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ portes\\ \\(portes\\ intérieures\\ et\\ portes\\ d'entrée\\ confondues\\)\\ sont\\ dessinées\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 247,
+  "example": "Combien de portes (portes intérieures et portes d'entrée confondues) sont dessinées sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Türen\\ \\(Innentüren\\ und\\ Eingangstüren\\ zusammen\\)\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 698,
+  "example": "Wie viele Türen (Innentüren und Eingangstüren zusammen) sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quelle\\ est\\ la\\ surface\\ nette\\ totale\\ en\\ m²\\ de\\ toutes\\ les\\ pièces\\ désignées\\ «\\ (?P<name>.+?)\\ »\\ à\\ cet\\ étage\\ \\?$",
+  "template": "total_area_named",
+  "fixed": {},
+  "n": 240,
+  "example": "Quelle est la surface nette totale en m² de toutes les pièces désignées « Pièce » à cet étage ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ groß\\ ist\\ das\\ gesamte\\ Netto\\-Volumen\\ aller\\ Decken\\ und\\ Bodenplatten\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ in\\ m³\\?$",
+  "template": "slab_volume",
+  "fixed": {},
+  "n": 19,
+  "example": "Wie groß ist das gesamte Netto-Volumen aller Decken und Bodenplatten im Geschoss „Erdgeschoss“ in m³?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Qual\\ è\\ la\\ superficie\\ netta\\ totale\\ in\\ m²\\ di\\ tutti\\ i\\ locali\\ denominati\\ «(?P<name>.+?)»\\ in\\ questo\\ piano\\?$",
+  "template": "total_area_named",
+  "fixed": {},
+  "n": 94,
+  "example": "Qual è la superficie netta totale in m² di tutti i locali denominati «Camera da letto» in questo piano?",
+  "lang": "it"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quante\\ porte\\ \\(porte\\ interne\\ e\\ porte\\ d'ingresso\\ insieme\\)\\ sono\\ disegnate\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 95,
+  "example": "Quante porte (porte interne e porte d'ingresso insieme) sono disegnate in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Jaka\\ jest\\ łączna\\ powierzchnia\\ netto\\ wszystkich\\ pomieszczeń\\ na\\ kondygnacji\\ „(?P<storey>.+?)”\\ \\(w\\ m²\\)\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 3,
+  "example": "Jaka jest łączna powierzchnia netto wszystkich pomieszczeń na kondygnacji „-1” (w m²)?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ la\\ superficie\\ útil\\ total\\ de\\ todos\\ los\\ locales\\ de\\ la\\ planta\\ «(?P<storey>.+?)»,\\ en\\ m²\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 10,
+  "example": "¿Cuál es la superficie útil total de todos los locales de la planta «P0», en m²?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ groß\\ ist\\ die\\ gesamte\\ Netto\\-Seitenfläche\\ aller\\ Wände\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ in\\ m²\\?$",
+  "template": "wall_side_area",
+  "fixed": {},
+  "n": 19,
+  "example": "Wie groß ist die gesamte Netto-Seitenfläche aller Wände im Geschoss „Erdgeschoss“ in m²?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ groß\\ ist\\ die\\ gesamte\\ Netto\\-Grundfläche\\ aller\\ Räume\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ in\\ m²\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 4,
+  "example": "Wie groß ist die gesamte Netto-Grundfläche aller Räume im Geschoss „B01_OKRD“ in m²?",
+  "lang": "de"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ suihkua\\ ja\\ kylpyammetta\\ pohjapiirustukseen\\ on\\ piirretty\\ yhteensä\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "shower_bath"
+  },
+  "n": 4442,
+  "example": "Kuinka monta suihkua ja kylpyammetta pohjapiirustukseen on piirretty yhteensä?",
+  "lang": "fi"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ groß\\ ist\\ das\\ gesamte\\ Netto\\-Volumen\\ aller\\ Wände\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ in\\ m³\\?$",
+  "template": "wall_volume",
+  "fixed": {},
+  "n": 20,
+  "example": "Wie groß ist das gesamte Netto-Volumen aller Wände im Geschoss „Erdgeschoss“ in m³?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ pièces\\ portant\\ la\\ désignation\\ «\\ (?P<name>.+?)\\ »\\ y\\ a\\-t\\-il\\ à\\ cet\\ étage\\ \\?$",
+  "template": "count_rooms_named",
+  "fixed": {},
+  "n": 1500,
+  "example": "Combien de pièces portant la désignation « Pièce » y a-t-il à cet étage ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ parveketta\\ \\(myös\\ lasitetut\\ parvekkeet\\)\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "balcony"
+  },
+  "n": 1462,
+  "example": "Kuinka monta parveketta (myös lasitetut parvekkeet) pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quanti\\ appartamenti\\ \\(unità\\ abitative\\)\\ sono\\ rappresentati\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "apartments"
+  },
+  "n": 95,
+  "example": "Quanti appartamenti (unità abitative) sono rappresentati in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Jaka\\ jest\\ powierzchnia\\ netto\\ pomieszczenia\\ „(?P<room>.+?)”\\ na\\ kondygnacji\\ „(?P<storey>.+?)”\\ \\(w\\ m²\\)\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 19,
+  "example": "Jaka jest powierzchnia netto pomieszczenia „Comunication (-1.1)” na kondygnacji „-1” (w m²)?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ groß\\ ist\\ die\\ Netto\\-Grundfläche\\ des\\ Raums\\ „(?P<room>.+?)“\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ in\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 110,
+  "example": "Wie groß ist die Netto-Grundfläche des Raums „Küche (6)“ im Geschoss „Erdgeschoss“ in m²?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ de\\ totale\\ netto\\ vloeroppervlakte\\ van\\ alle\\ ruimtes\\ op\\ '(?P<storey>.+?)',\\ in\\ m²\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 5,
+  "example": "Wat is de totale netto vloeroppervlakte van alle ruimtes op '00 Begane grond', in m²?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ det\\ samlede\\ nettovolumen\\ af\\ alle\\ dæk\\ og\\ plader\\ på\\ '(?P<storey>.+?)'\\ i\\ m³\\?$",
+  "template": "slab_volume",
+  "fixed": {},
+  "n": 8,
+  "example": "Hvad er det samlede nettovolumen af alle dæk og plader på 'Kælder' i m³?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ de\\ totale\\ netto\\ zijoppervlakte\\ van\\ alle\\ wanden\\ op\\ '(?P<storey>.+?)',\\ in\\ m²\\?$",
+  "template": "wall_side_area",
+  "fixed": {},
+  "n": 6,
+  "example": "Wat is de totale netto zijoppervlakte van alle wanden op '00 Begane grond', in m²?",
+  "lang": "nl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Räume\\ mit\\ der\\ Bezeichnung\\ «(?P<name>.+?)»\\ gibt\\ es\\ in\\ diesem\\ Geschoss\\?$",
+  "template": "count_rooms_named",
+  "fixed": {},
+  "n": 4292,
+  "example": "Wie viele Räume mit der Bezeichnung «Schlafzimmer» gibt es in diesem Geschoss?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ la\\ superficie\\ útil\\ del\\ local\\ «(?P<room>.+?)»\\ en\\ la\\ planta\\ «(?P<storey>.+?)»,\\ en\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 142,
+  "example": "¿Cuál es la superficie útil del local «0GARAJE (01.11)» en la planta «P0», en m²?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Kui\\ suur\\ on\\ kõigi\\ ruumide\\ netopõrandapind\\ kokku\\ korrusel\\ „(?P<storey>.+?)“\\ \\(m²\\)\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 5,
+  "example": "Kui suur on kõigi ruumide netopõrandapind kokku korrusel „1.korrus“ (m²)?",
+  "lang": "et"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ d'appartements\\ \\(logements\\)\\ figurent\\ sur\\ ce\\ plan\\ d'étage\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "apartments"
+  },
+  "n": 247,
+  "example": "Combien d'appartements (logements) figurent sur ce plan d'étage ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ de\\ netto\\ vloeroppervlakte\\ van\\ de\\ ruimte\\ '(?P<room>.+?)'\\ op\\ '(?P<storey>.+?)',\\ in\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 223,
+  "example": "Wat is de netto vloeroppervlakte van de ruimte 'werkkast (3)' op '00 Begane grond', in m²?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ het\\ totale\\ netto\\ volume\\ van\\ alle\\ vloeren\\ op\\ '(?P<storey>.+?)',\\ in\\ m³\\?$",
+  "template": "slab_volume",
+  "fixed": {},
+  "n": 9,
+  "example": "Wat is het totale netto volume van alle vloeren op '00 Begane grond', in m³?",
+  "lang": "nl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quanti\\ locali\\ con\\ la\\ denominazione\\ «(?P<name>.+?)»\\ ci\\ sono\\ in\\ questo\\ piano\\?$",
+  "template": "count_rooms_named",
+  "fixed": {},
+  "n": 573,
+  "example": "Quanti locali con la denominazione «Camera da letto» ci sono in questo piano?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ escaleras\\ en\\ el\\ plano\\ de\\ la\\ planta\\ «(?P<storey>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 8,
+  "example": "¿Cuál es el número de escaleras en el plano de la planta «P1»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ het\\ totale\\ netto\\ volume\\ van\\ alle\\ wanden\\ op\\ '(?P<storey>.+?)',\\ in\\ m³\\?$",
+  "template": "wall_volume",
+  "fixed": {},
+  "n": 6,
+  "example": "Wat is het totale netto volume van alle wanden op '00 Begane grond', in m³?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ det\\ samlede\\ nettosideareal\\ af\\ alle\\ vægge\\ på\\ '(?P<storey>.+?)'\\ i\\ m²\\?$",
+  "template": "wall_side_area",
+  "fixed": {},
+  "n": 7,
+  "example": "Hvad er det samlede nettosideareal af alle vægge på 'Grundplan' i m²?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ lang\\ sind\\ alle\\ Wände\\ im\\ Geschoss\\ „(?P<storey>.+?)“\\ zusammen,\\ in\\ Metern\\?$",
+  "template": "wall_length",
+  "fixed": {},
+  "n": 19,
+  "example": "Wie lang sind alle Wände im Geschoss „Erdgeschoss“ zusammen, in Metern?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ locales\\ en\\ el\\ plano\\ de\\ la\\ planta\\ «(?P<storey>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 12,
+  "example": "¿Cuál es el número de locales en el plano de la planta «P0»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ puertas\\ en\\ el\\ plano\\ de\\ la\\ planta\\ «(?P<storey>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 10,
+  "example": "¿Cuál es el número de puertas en el plano de la planta «P0»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ det\\ samlede\\ nettovolumen\\ af\\ alle\\ vægge\\ på\\ '(?P<storey>.+?)'\\ i\\ m³\\?$",
+  "template": "wall_volume",
+  "fixed": {},
+  "n": 7,
+  "example": "Hvad er det samlede nettovolumen af alle vægge på 'Grundplan' i m³?",
+  "lang": "da"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Badewannen\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "bathtubs"
+  },
+  "n": 590,
+  "example": "Wie viele Badewannen sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wat\\ is\\ de\\ totale\\ lengte\\ van\\ alle\\ wanden\\ op\\ '(?P<storey>.+?)',\\ in\\ meter\\?$",
+  "template": "wall_length",
+  "fixed": {},
+  "n": 6,
+  "example": "Wat is de totale lengte van alle wanden op '00 Begane grond', in meter?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ den\\ samlede\\ længde\\ af\\ alle\\ vægge\\ på\\ '(?P<storey>.+?)'\\ i\\ meter\\?$",
+  "template": "wall_length",
+  "fixed": {},
+  "n": 7,
+  "example": "Hvad er den samlede længde af alle vægge på 'Grundplan' i meter?",
+  "lang": "da"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Wohnungen\\ sind\\ auf\\ diesem\\ Grundriss\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "apartments"
+  },
+  "n": 698,
+  "example": "Wie viele Wohnungen sind auf diesem Grundriss dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Fenster\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 698,
+  "example": "Wie viele Fenster sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Lavabos\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "washbasins"
+  },
+  "n": 698,
+  "example": "Wie viele Lavabos sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quelle\\ est\\ la\\ surface\\ nette\\ de\\ la\\ pièce\\ (?P<number>.+?)\\ \\((?:.+?)\\)\\ en\\ m²\\ \\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 493,
+  "example": "Quelle est la surface nette de la pièce 5.10 (« Séjour/repas ») en m² ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ Duschen\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "showers"
+  },
+  "n": 215,
+  "example": "Wie viele Duschen sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ det\\ samlede\\ nettoareal\\ af\\ alle\\ rum\\ på\\ '(?P<storey>.+?)'\\ i\\ m²\\?$",
+  "template": "total_room_area",
+  "fixed": {},
+  "n": 8,
+  "example": "Hvad er det samlede nettoareal af alle rum på 'Kælder' i m²?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ corpuri\\ de\\ iluminat\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "lights"
+  },
+  "n": 1,
+  "example": "Care este numărul de corpuri de iluminat din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Kui\\ suur\\ on\\ ruumi\\ „(?P<room>.+?)“\\ netopõrandapind\\ korrusel\\ „(?P<storey>.+?)“\\ \\(m²\\)\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 285,
+  "example": "Kui suur on ruumi „KORIDOR (119)“ netopõrandapind korrusel „1.korrus“ (m²)?",
+  "lang": "et"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ WC\\-istuinta\\ pohjapiirustukseen\\ on\\ piirretty\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "toilet"
+  },
+  "n": 4782,
+  "example": "Kuinka monta WC-istuinta pohjapiirustukseen on piirretty?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quante\\ vasche\\ da\\ bagno\\ sono\\ disegnate\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "bathtubs"
+  },
+  "n": 83,
+  "example": "Quante vasche da bagno sono disegnate in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ stâlpi\\ de\\ pe\\ planul\\ nivelului\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 4,
+  "example": "Care este numărul de stâlpi de pe planul nivelului „Level 1”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ makuuhuonetta\\ \\(MH\\)\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "bedroom"
+  },
+  "n": 2960,
+  "example": "Kuinka monta makuuhuonetta (MH) pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ scări\\ de\\ pe\\ planul\\ nivelului\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 4,
+  "example": "Care este numărul de scări de pe planul nivelului „Ground Level”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ erillistä\\ WC\\-tilaa\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "wc_room"
+  },
+  "n": 2332,
+  "example": "Kuinka monta erillistä WC-tilaa pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ gross\\ ist\\ die\\ Nettofläche\\ von\\ Raum\\ (?P<number>.+?)\\ \\((?:.+?)\\)\\ in\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 1393,
+  "example": "Wie gross ist die Nettofläche von Raum 7.01 («Balkon») in m²?",
+  "lang": "de"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Wie\\ viele\\ WCs\\ sind\\ auf\\ diesem\\ Grundriss\\ eingezeichnet\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "toilets"
+  },
+  "n": 698,
+  "example": "Wie viele WCs sind auf diesem Grundriss eingezeichnet?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Qual\\ è\\ il\\ numero\\ di\\ muri\\ nella\\ pianta\\ del\\ piano\\ «(?P<storey>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Qual è il numero di muri nella pianta del piano «0_Piano terra»?",
+  "lang": "it"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Qual\\ è\\ la\\ superficie\\ netta\\ del\\ locale\\ (?P<number>.+?)\\ \\((?:.+?)\\)\\ in\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 190,
+  "example": "Qual è la superficie netta del locale 1.02 («Camera da letto») in m²?",
+  "lang": "it"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ kerrosta\\ pohjapiirustuksessa\\ on\\ esitetty\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "floor"
+  },
+  "n": 4787,
+  "example": "Kuinka monta kerrosta pohjapiirustuksessa on esitetty?",
+  "lang": "fi"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ vinduer\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 4,
+  "example": "Hvor mange vinduer er vist på plantegningen for '2. Sal'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ trapper\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 2,
+  "example": "Hvor mange trapper er vist på plantegningen for '4. Sal'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ kolommen\\ staan\\ er\\ op\\ de\\ plattegrond\\ van\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 2,
+  "example": "Hoeveel kolommen staan er op de plattegrond van '00 Begane grond'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ baignoires\\ sont\\ dessinées\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "bathtubs"
+  },
+  "n": 224,
+  "example": "Combien de baignoires sont dessinées sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Treppen\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 13,
+  "example": "Wie viele Treppen sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Fenster\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 10,
+  "example": "Wie viele Fenster sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Stützen\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 8,
+  "example": "Wie viele Stützen sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ søjler\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 7,
+  "example": "Hvor mange søjler er vist på plantegningen for 'Kælder'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ ruimtes\\ staan\\ er\\ op\\ de\\ plattegrond\\ van\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 5,
+  "example": "Hoeveel ruimtes staan er op de plattegrond van '00 Begane grond'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ vægge\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 8,
+  "example": "Hvor mange vægge er vist på plantegningen for 'Kælder'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ wanden\\ staan\\ er\\ op\\ de\\ plattegrond\\ van\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 4,
+  "example": "Hoeveel wanden staan er op de plattegrond van '01 Eerste verdieping'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ escaleras\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de escaleras en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ deuren\\ staan\\ er\\ op\\ de\\ plattegrond\\ van\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 1,
+  "example": "Hoeveel deuren staan er op de plattegrond van '00 Begane grond'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ fenêtres\\ sont\\ dessinées\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 247,
+  "example": "Combien de fenêtres sont dessinées sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Türen\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 17,
+  "example": "Wie viele Türen sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Räume\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 17,
+  "example": "Wie viele Räume sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Wände\\ sind\\ im\\ Grundriss\\ „(?P<storey>.+?)“\\ dargestellt\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 12,
+  "example": "Wie viele Wände sind im Grundriss „Erdgeschoss“ dargestellt?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ døre\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 8,
+  "example": "Hvor mange døre er vist på plantegningen for 'Kælder'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ ramen\\ staan\\ er\\ op\\ de\\ plattegrond\\ van\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 3,
+  "example": "Hoeveel ramen staan er op de plattegrond van 'Entrance'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ ventanas\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de ventanas en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ pomieszczeń\\ pokazano\\ na\\ rzucie\\ kondygnacji\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 2,
+  "example": "Ile pomieszczeń pokazano na rzucie kondygnacji „-1”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ douches\\ sont\\ dessinées\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "showers"
+  },
+  "n": 72,
+  "example": "Combien de douches sont dessinées sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ rum\\ er\\ vist\\ på\\ plantegningen\\ for\\ '(?P<storey>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 7,
+  "example": "Hvor mange rum er vist på plantegningen for 'Kælder'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ puertas\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de puertas en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ locales\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de locales en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ pilares\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de pilares en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ lavabos\\ sont\\ dessinés\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "washbasins"
+  },
+  "n": 247,
+  "example": "Combien de lavabos sont dessinés sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvad\\ er\\ nettoarealet\\ af\\ rummet\\ '(?P<room>.+?)'\\ på\\ '(?P<storey>.+?)'\\ i\\ m²\\?$",
+  "template": "room_area",
+  "fixed": {},
+  "n": 117,
+  "example": "Hvad er nettoarealet af rummet 'Depot (Rum nr. K08)' på 'Kælder' i m²?",
+  "lang": "da"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quante\\ finestre\\ sono\\ disegnate\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 95,
+  "example": "Quante finestre sono disegnate in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ sanitaire\\ toestellen\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "sanitary"
+  },
+  "n": 1,
+  "example": "Hoeveel sanitaire toestellen bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Sanitärobjekte\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "sanitary"
+  },
+  "n": 3,
+  "example": "Wie viele Sanitärobjekte enthält das Modell „DigitalHub v2 - Fachmodell Sanitär“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ muros\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de muros en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^¿Cuál\\ es\\ el\\ número\\ de\\ vigas\\ en\\ el\\ modelo\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 2,
+  "example": "¿Cuál es el número de vigas en el modelo «BIM-Speed Vitoria-Gasteiz - ALD26 (baseline, before renovation)»?",
+  "lang": "es"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quanti\\ lavabi\\ sono\\ disegnati\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "washbasins"
+  },
+  "n": 95,
+  "example": "Quanti lavabi sono disegnati in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Qual\\ è\\ il\\ numero\\ di\\ finestre\\ nel\\ modello\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Qual è il numero di finestre nel modello «BIM-Speed Frigento - Palazzo Testa Cipriano (baseline)»?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ ferestre\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Care este numărul de ferestre din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ schodów\\ pokazano\\ na\\ rzucie\\ kondygnacji\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 1,
+  "example": "Ile schodów pokazano na rzucie kondygnacji „-1”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quante\\ docce\\ sono\\ disegnate\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "showers"
+  },
+  "n": 35,
+  "example": "Quante docce sono disegnate in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ drzwi\\ pokazano\\ na\\ rzucie\\ kondygnacji\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 3,
+  "example": "Ile drzwi pokazano na rzucie kondygnacji „-1”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ ścian\\ pokazano\\ na\\ rzucie\\ kondygnacji\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 3,
+  "example": "Ile ścian pokazano na rzucie kondygnacji „-1”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ pereți\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Care este numărul de pereți din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ stâlpi\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 1,
+  "example": "Care este numărul de stâlpi din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ grinzi\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 1,
+  "example": "Care este numărul de grinzi din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ okien\\ pokazano\\ na\\ rzucie\\ kondygnacji\\ „(?P<storey>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Ile okien pokazano na rzucie kondygnacji „1”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Combien\\ de\\ WC\\ sont\\ dessinés\\ sur\\ ce\\ plan\\ \\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "toilets"
+  },
+  "n": 247,
+  "example": "Combien de WC sont dessinés sur ce plan ?",
+  "lang": "fr"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ treppi\\ on\\ näidatud\\ korruse\\ „(?P<storey>.+?)“\\ plaanil\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 4,
+  "example": "Mitu treppi on näidatud korruse „1.korrus“ plaanil?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Qual\\ è\\ il\\ numero\\ di\\ porte\\ nel\\ modello\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 1,
+  "example": "Qual è il numero di porte nel modello «BIM-Speed Frigento - Palazzo Testa Cipriano (baseline)»?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Care\\ este\\ numărul\\ de\\ scări\\ din\\ modelul\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 1,
+  "example": "Care este numărul de scări din modelul „BIM-Speed Barlad apartment block (architecture + MEP)”?",
+  "lang": "ro"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ ikkunaa\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "window"
+  },
+  "n": 4787,
+  "example": "Kuinka monta ikkunaa pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "swiss",
+  "regex": "^Quanti\\ WC\\ sono\\ disegnati\\ in\\ questa\\ pianta\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "toilets"
+  },
+  "n": 95,
+  "example": "Quanti WC sono disegnati in questa pianta?",
+  "lang": "it"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ ruumi\\ on\\ näidatud\\ korruse\\ „(?P<storey>.+?)“\\ plaanil\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 5,
+  "example": "Mitu ruumi on näidatud korruse „1.korrus“ plaanil?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ seina\\ on\\ näidatud\\ korruse\\ „(?P<storey>.+?)“\\ plaanil\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 3,
+  "example": "Mitu seina on näidatud korruse „2.korrus“ plaanil?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ posti\\ on\\ näidatud\\ korruse\\ „(?P<storey>.+?)“\\ plaanil\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 1,
+  "example": "Mitu posti on näidatud korruse „1.korrus“ plaanil?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Qual\\ è\\ il\\ numero\\ di\\ muri\\ nel\\ modello\\ «(?P<model>.+?)»\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Qual è il numero di muri nel modello «BIM-Speed Frigento - Palazzo Testa Cipriano (baseline)»?",
+  "lang": "it"
+ },
+ {
+  "domain": "cubicasa",
+  "regex": "^Kuinka\\ monta\\ saunaa\\ pohjapiirustuksessa\\ on\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "sauna"
+  },
+  "n": 3315,
+  "example": "Kuinka monta saunaa pohjapiirustuksessa on?",
+  "lang": "fi"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ vinduer\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Hvor mange vinduer er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ bjælker\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 1,
+  "example": "Hvor mange bjælker er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ trapper\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 1,
+  "example": "Hvor mange trapper er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ pomieszczeń\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 1,
+  "example": "Ile pomieszczeń znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Fenster\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 7,
+  "example": "Wie viele Fenster enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Treppen\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 7,
+  "example": "Wie viele Treppen enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Stützen\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 6,
+  "example": "Wie viele Stützen enthält das Modell „Buerogebaeude (Phantasy Office Building, AC20-Institute-Var-2)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ ust\\ on\\ näidatud\\ korruse\\ „(?P<storey>.+?)“\\ plaanil\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 5,
+  "example": "Mitu ust on näidatud korruse „1.korrus“ plaanil?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ søjler\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 1,
+  "example": "Hvor mange søjler er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Träger\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 6,
+  "example": "Wie viele Träger enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ vægge\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Hvor mange vægge er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Türen\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 7,
+  "example": "Wie viele Türen enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Räume\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 7,
+  "example": "Wie viele Räume enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Wie\\ viele\\ Wände\\ enthält\\ das\\ Modell\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 7,
+  "example": "Wie viele Wände enthält das Modell „FZK-Haus (Simple Phantasy Building)“?",
+  "lang": "de"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ døre\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 1,
+  "example": "Hvor mange døre er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hvor\\ mange\\ rum\\ er\\ der\\ i\\ modellen\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 1,
+  "example": "Hvor mange rum er der i modellen 'Molio Demo-hus'?",
+  "lang": "da"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ schodów\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 1,
+  "example": "Ile schodów znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ kolommen\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 1,
+  "example": "Hoeveel kolommen bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ drzwi\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 1,
+  "example": "Ile drzwi znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ okien\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Ile okien znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ ścian\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Ile ścian znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Ile\\ belek\\ znajduje\\ się\\ w\\ modelu\\ „(?P<model>.+?)”\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 1,
+  "example": "Ile belek znajduje się w modelu „BIM-Speed Gdynia - semi-detached house Ruchu Oporu 18”?",
+  "lang": "pl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ ruimtes\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 2,
+  "example": "Hoeveel ruimtes bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ deuren\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 2,
+  "example": "Hoeveel deuren bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ wanden\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 2,
+  "example": "Hoeveel wanden bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ balken\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 1,
+  "example": "Hoeveel balken bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Hoeveel\\ ramen\\ bevat\\ het\\ model\\ '(?P<model>.+?)'\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 2,
+  "example": "Hoeveel ramen bevat het model 'Gymzaal Hambakendreef, Amersfoort (example project location)'?",
+  "lang": "nl"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ treppi\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "stairs"
+  },
+  "n": 1,
+  "example": "Mitu treppi on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ akent\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "windows"
+  },
+  "n": 1,
+  "example": "Mitu akent on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ ruumi\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "rooms"
+  },
+  "n": 1,
+  "example": "Mitu ruumi on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ seina\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "walls"
+  },
+  "n": 1,
+  "example": "Mitu seina on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ posti\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "columns"
+  },
+  "n": 1,
+  "example": "Mitu posti on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ tala\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "beams"
+  },
+  "n": 1,
+  "example": "Mitu tala on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ },
+ {
+  "domain": "ifc",
+  "regex": "^Mitu\\ ust\\ on\\ mudelis\\ „(?P<model>.+?)“\\?$",
+  "template": "count",
+  "fixed": {
+   "kind": "doors"
+  },
+  "n": 1,
+  "example": "Mitu ust on mudelis „Maleva tänav 18 korterelamu (Esplanades example model)“?",
+  "lang": "et"
+ }
+]

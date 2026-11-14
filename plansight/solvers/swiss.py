@@ -295,7 +295,7 @@ _COUNT_PATTERNS = [
 
 
 def parse_en(q: str) -> tuple[str, dict] | None:
-    """Map an English Swiss-dataset question to (template, params). Gemma replaces this for other languages."""
+    """Map an English Swiss-dataset question to (template, params). Other languages go through plansight.router."""
     ql = q.lower()
     for pat, kind in _COUNT_PATTERNS:
         if ql.startswith(pat):
@@ -339,7 +339,13 @@ class SwissSolver:
     def solve(self, path: str, question: str) -> Answer | None:
         from plansight.config import resolve
 
-        parsed = parse_en(question)
-        if parsed is None:
+        from plansight.router import parse
+
+        r = parse(path, question)  # any language: English parser -> template bank -> Gemma
+        if not r.ok:
             return None
-        return answer(str(resolve(path)), *parsed)
+        ans = answer(str(resolve(path)), r.template, r.params)
+        ans.cost_usd += r.cost_usd
+        if r.method != "en":
+            ans.explanation = f"{ans.explanation} [{r.describe()}]"
+        return ans

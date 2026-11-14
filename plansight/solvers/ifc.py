@@ -373,7 +373,7 @@ def solve_template(path: str, template: str, p: dict) -> Answer | None:
 
 # ----------------------------------------------------------------------------------------------- parsing
 _EN = [
-    (r"how many (.+?) are there in the model '(.+)'\?", lambda m: ("count", {"kind": NOUNS.get(m[1])})),
+    (r"how many (.+?) are there in the model '(.+)'\?", lambda m: ("count", {"kind": NOUNS.get(m[1]), "model": m[2]})),
     (r"how many (.+?) are shown on the floor plan of '(.+)'\?", lambda m: ("count", {"kind": NOUNS.get(m[1]), "storey": m[2]})),
     (r"what is the net floor area of the room '(.+)' on '(.+?)', in", lambda m: ("room_area", {"room": m[1], "storey": m[2]})),
     (r"what is the total net floor area of all rooms \(spaces\) on '(.+?)', in", lambda m: ("total_room_area", {"storey": m[1]})),
@@ -404,7 +404,14 @@ class IfcSolver:
         return "ifc_models/" in p and p.endswith((".ifc", ".pdf"))
 
     def solve(self, path: str, question: str) -> Answer | None:
-        parsed = parse_en(question)
-        if parsed is None:
+        from plansight.router import parse
+
+        r = parse(path, question)  # any language: English parser -> template bank -> Gemma
+        if not r.ok:
             return None
-        return solve_template(path, *parsed)
+        ans = solve_template(path, r.template, r.params)
+        if ans is not None:
+            ans.cost_usd += r.cost_usd
+            if r.method != "en":
+                ans.explanation = f"{ans.explanation} [{r.describe()}]"
+        return ans
