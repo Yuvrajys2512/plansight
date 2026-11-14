@@ -8,10 +8,11 @@ from plansight.solvers.base import Solver
 
 
 def _registry() -> dict[str, Solver]:
+    from plansight.solvers.cubicasa_text import CubicasaTextSolver
     from plansight.solvers.ifc import IfcSolver
     from plansight.solvers.swiss import SwissSolver
 
-    return {s.name: s for s in [SwissSolver(), IfcSolver()]}
+    return {s.name: s for s in [SwissSolver(), IfcSolver(), CubicasaTextSolver()]}
 
 
 def get_solver(name: str) -> Solver:

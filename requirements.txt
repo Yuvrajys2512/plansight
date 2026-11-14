@@ -13,3 +13,4 @@ modal
 shapely
 pytest
 httpx
+rapidocr-onnxruntime
