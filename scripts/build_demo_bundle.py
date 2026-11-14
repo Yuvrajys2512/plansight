@@ -23,10 +23,19 @@ def main():
     ap.add_argument("--extra", nargs="*", default=[])
     a = ap.parse_args()
     from plansight.api.app import _records
+    from plansight.api.scene3d import build_scene, cache_paths
 
     items = [i for src in _records().values() for i in src]
     paths = {i["path"] for i in items} | {i["model_path"] for i in items if i.get("model_path")} | set(a.extra)
     print(f"{len(items)} demo drawings, {len(paths)} files")
+    for item in items:
+        if item["source"] not in ("swiss_dwellings", "ifc_models"):
+            continue
+        drawing = resolve(item["path"])
+        model = resolve(item["model_path"]) if item.get("model_path") else None
+        scene = build_scene(item["path"], drawing, ifc_model=model)
+        _, glb = cache_paths(item["path"])
+        print(f"  scene {item['path']}: {scene['kind']}" + (f", GLB {glb.stat().st_size / 1e6:.2f} MB" if glb.exists() else ""))
     if OUT.exists():
         shutil.rmtree(OUT)
     (OUT / "data").mkdir(parents=True)
