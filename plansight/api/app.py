@@ -349,6 +349,27 @@ def ask(request: AskRequest):
     return result
 
 
+class UploadRequest(BaseModel):
+    image: str
+    session: str | None = None
+
+
+@app.post("/api/upload")
+def upload(request: UploadRequest):
+    """Phone photo or dropped image of a floor plan -> cleaned sheet the CubiCasa pipeline can read."""
+    from plansight.api.snap import save_upload
+    try:
+        return save_upload(request.image, request.session)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+
+
+@app.get("/api/snap/{session}")
+def snap_latest(session: str):
+    from plansight.api.snap import latest
+    return latest(session) or {}
+
+
 @app.get("/api/voice/token")
 def voice_token():
     """Short-lived WebRTC token for the ElevenLabs voice agent; the API key never reaches the browser."""

@@ -6,9 +6,9 @@ import { sfx } from './sfx';
 
 type Poly = [number, number][];
 type Room = { id: string; polygon: Poly; name?: string | null; number?: string | null; area_m2?: number | null };
-type PlanScene = { kind: 'plan'; bounds: [number, number, number, number]; walls: { id: string; polygon: Poly; height?: number }[]; rooms: Room[]; doors: { id: string; polygon: Poly }[]; windows: { id: string; polygon: Poly }[]; fixtures: { id: string; polygon: Poly }[]; unit_outlines?: { id: string; polygon: Poly }[] };
+type PlanScene = { kind: 'plan'; raster?: { m_per_px: number; cx: number; cy: number } | null; bounds: [number, number, number, number]; walls: { id: string; polygon: Poly; holes?: Poly[]; height?: number }[]; rooms: Room[]; doors: { id: string; polygon: Poly }[]; windows: { id: string; polygon: Poly }[]; fixtures: { id: string; polygon: Poly }[]; unit_outlines?: { id: string; polygon: Poly }[] };
 type IfcScene = { kind: 'ifc'; glb: string; elements: { guid: string; ifc_class: string; name?: string; storey?: string | null }[]; storeys?: { name: string; elevation: number }[] };
-export type Highlight = { sceneKind?: string | null; roomNames?: string[]; ifcClass?: string | null; label?: string; expected?: number | null };
+export type Highlight = { sceneKind?: string | null; roomNames?: string[]; ifcClass?: string | null; label?: string; expected?: number | null; boxes?: [number, number, number, number][] };
 export type FlyRequest = { query: string; key: number } | null;
 export type RoomInfo = { name: string; area_m2?: number | null };
 
@@ -34,8 +34,10 @@ export function matchRooms(rooms: Room[], query: string): { label: string; rooms
   return { label: q, rooms: direct };
 }
 
-function shapeOf(poly: Poly) {
-  const s = new THREE.Shape(); poly.forEach(([x, y], i) => (i ? s.lineTo(x, y) : s.moveTo(x, y))); s.closePath(); return s;
+function shapeOf(poly: Poly, holes: Poly[] = []) {
+  const s = new THREE.Shape(); poly.forEach(([x, y], i) => (i ? s.lineTo(x, y) : s.moveTo(x, y))); s.closePath();
+  holes.forEach(h => { const p = new THREE.Path(); h.forEach(([x, y], i) => (i ? p.lineTo(x, y) : p.moveTo(x, y))); p.closePath(); s.holes.push(p); });
+  return s;
 }
 const centroid = (p: Poly) => p.reduce((a, [x, y]) => [a[0] + x / p.length, a[1] + y / p.length], [0, 0]);
 const ease = (p: number) => 1 - Math.pow(1 - Math.min(1, Math.max(0, p)), 3);
@@ -83,8 +85,8 @@ function usePop(n: number, k: unknown, delay = 1500) {
   return shown;
 }
 
-function Extruded({ poly, depth, z = 0, color, opacity = 1, emissive, lift }: { poly: Poly; depth: number; z?: number; color: string | THREE.Color; opacity?: number; emissive?: THREE.Color | null; lift: React.MutableRefObject<number> }) {
-  const geo = useMemo(() => new THREE.ExtrudeGeometry(shapeOf(poly), { depth, bevelEnabled: false }), [poly, depth]);
+function Extruded({ poly, holes, depth, z = 0, color, opacity = 1, emissive, lift }: { poly: Poly; holes?: Poly[]; depth: number; z?: number; color: string | THREE.Color; opacity?: number; emissive?: THREE.Color | null; lift: React.MutableRefObject<number> }) {
+  const geo = useMemo(() => new THREE.ExtrudeGeometry(shapeOf(poly, holes), { depth, bevelEnabled: false }), [poly, holes, depth]);
   const ref = useRef<THREE.Mesh>(null);
   useFrame(() => { if (ref.current) { ref.current.scale.z = Math.max(0.001, lift.current); ref.current.position.z = z * lift.current; } });
   return <mesh ref={ref} geometry={geo} castShadow receiveShadow>
@@ -101,6 +103,12 @@ function PlanModel({ scene, hl, k, focus, onCount }: { scene: PlanScene; hl: Hig
   const targets = useMemo(() => {
     type T = Room & { ids: string[] };
     let list: Room[] = [];
+    if (scene.raster && hl.boxes?.length) {
+      const { m_per_px: m, cx: rx, cy: ry } = scene.raster;
+      const toM = (x: number, y: number): [number, number] => [(x - rx) * m, -(y - ry) * m];
+      list = hl.boxes.map(([x0, y0, x1, y1], i) => ({ id: `b${i}`, polygon: [toM(x0, y0), toM(x1, y0), toM(x1, y1), toM(x0, y1)] }));
+      return list.map(it => ({ ...it, ids: [it.id] })).sort((a, b) => centroid(a.polygon)[0] - centroid(b.polygon)[0]);
+    }
     if (kind === 'doors') list = scene.doors; else if (kind === 'windows') list = scene.windows; else if (kind === 'fixtures') list = scene.fixtures;
     else if (kind === 'units') list = scene.unit_outlines || [];
     else if (kind === 'rooms') { const names = (hl.roomNames || []).map(n => n.toLowerCase()); list = names.length ? scene.rooms.filter(r => r.name && names.some(n => r.name!.toLowerCase().includes(n) || n.includes(r.name!.toLowerCase()))) : scene.rooms; }
@@ -114,7 +122,7 @@ function PlanModel({ scene, hl, k, focus, onCount }: { scene: PlanScene; hl: Hig
       groups = best;
     }
     return groups.sort((a, b) => centroid(a.polygon)[0] - centroid(b.polygon)[0]);
-  }, [scene, kind, hl.roomNames, hl.expected]);
+  }, [scene, kind, hl.roomNames, hl.expected, hl.boxes]);
   const shown = usePop(targets.length, k, 2300);
   useEffect(() => onCount(shown, targets.length), [shown, targets.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const lit = new Set(targets.slice(0, shown).flatMap(t => t.ids));
@@ -124,7 +132,9 @@ function PlanModel({ scene, hl, k, focus, onCount }: { scene: PlanScene; hl: Hig
   return <group rotation={[-Math.PI / 2, 0, 0]} position={[-cx, 0, cy]}>
     {scene.rooms.map(r => { const on = lit.has(r.id) || focusIds.has(r.id); const col = focusIds.has(r.id) ? CYAN : LIME; return <Extruded key={r.id} poly={r.polygon} depth={on ? 0.12 : 0.04} color={on ? col : '#1d2a38'} emissive={on ? col : null} opacity={on ? .6 : 1} lift={lift} />; })}
     {kind === 'units' && targets.map(u => <Extruded key={u.id} poly={u.polygon} depth={0.06} z={0.02} color={lit.has(u.id) ? LIME : '#1d2a38'} emissive={lit.has(u.id) ? LIME : null} opacity={.35} lift={lift} />)}
-    {scene.walls.map(w => <Extruded key={w.id} poly={w.polygon} depth={w.height || 2.7} color="#dfe7ef" opacity={dim ? .45 : .96} lift={lift} />)}
+    {scene.walls.map(w => <Extruded key={w.id} poly={w.polygon} holes={w.holes} depth={w.height || 2.7} color="#dfe7ef" opacity={dim ? .45 : .96} lift={lift} />)}
+    {scene.raster && targets.map(t => { const on = lit.has(t.id); const win = kind === 'windows'; return <Extruded key={t.id} poly={t.polygon} depth={win ? 1.3 : kind === 'doors' ? 2.1 : 1} z={win ? .9 : 0} color={on ? LIME : '#3a4a5c'} emissive={on ? LIME : null} opacity={on ? 1 : .4} lift={lift} />; })}
+    {scene.raster && <Extruded poly={[[scene.bounds[0] - .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[3] + .3], [scene.bounds[0] - .3, scene.bounds[3] + .3]]} depth={0.02} color="#172230" lift={lift} />}
     {scene.doors.map(d => <Extruded key={d.id} poly={d.polygon} depth={lit.has(d.id) ? 2.1 : .05} color={lit.has(d.id) ? LIME : '#6d7d8f'} emissive={lit.has(d.id) ? LIME : null} lift={lift} />)}
     {scene.windows.map(w => <Extruded key={w.id} poly={w.polygon} depth={1.3} z={.9} color={lit.has(w.id) ? LIME : CYAN} emissive={lit.has(w.id) ? LIME : null} opacity={lit.has(w.id) ? 1 : .35} lift={lift} />)}
     {scene.fixtures.map(f => <Extruded key={f.id} poly={f.polygon} depth={lit.has(f.id) ? .9 : .45} color={lit.has(f.id) ? LIME : '#8a99aa'} emissive={lit.has(f.id) ? LIME : null} lift={lift} />)}
@@ -220,6 +230,6 @@ export default function Scene3D({ path, hl, k, fly, onRooms }: { path: string; h
     {focus ? <div className="stage-counter scene-counter cyan"><span>{focus.label} · fly-through</span><b className="done">{focus.rooms.length}</b></div>
       : count[1] > 0 && <div className="stage-counter scene-counter"><span>{what || 'items'} · 3D</span><b className={count[0] >= count[1] ? 'done' : ''}>{hl.expected != null && scene?.kind === 'plan' ? Math.round(hl.expected * count[0] / count[1]) : count[0]}</b></div>}
     {chips.length > 0 && <div className="tour-chips"><span>Fly to</span>{chips.map(c => <button key={c.nice} className={focus?.label === c.nice ? 'on' : ''} onClick={() => tourTo(c.nice)}>{c.nice} <i>{c.n}</i></button>)}</div>}
-    <div className="scene-hint">{scene?.kind === 'ifc' ? 'IFC model · every element is a real BIM object' : 'Extruded from the DXF wall, door and window layers'} · drag to orbit · scroll to zoom</div>
+    <div className="scene-hint">{scene?.kind === 'ifc' ? 'IFC model · every element is a real BIM object' : scene && 'raster' in scene && scene.raster ? 'Walls traced from the image (OpenCV) · objects from the detector boxes' : 'Extruded from the DXF wall, door and window layers'} · drag to orbit · scroll to zoom</div>
   </div>;
 }

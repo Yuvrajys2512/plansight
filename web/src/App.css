@@ -315,7 +315,7 @@ button { font: inherit; color: inherit; }
 .tag3d small { display: block; font: 600 10px var(--mono); opacity: .75; }
 .lift-cta { display: block; width: calc(100% - 32px); margin: 12px 16px 0; padding: 12px; border-radius: 12px; border: 1px dashed #c8ff3d88; background: var(--lime-dim); color: var(--lime); font: 700 13px var(--display); cursor: pointer; animation: rise .4s both; }
 .lift-cta:hover { background: #c8ff3d33; }
-.mute { margin-left: auto; border: 1px solid var(--line2); background: #ffffff06; border-radius: 9px; height: 32px; width: 36px; cursor: pointer; font-size: 14px; }
+.mute { margin-left: 8px; border: 1px solid var(--line2); background: #ffffff06; border-radius: 9px; height: 32px; width: 36px; cursor: pointer; font-size: 14px; }
 .mute + .ticker { margin-left: 10px; }
 .intro-live { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: -14px 0 28px; font: 500 12px var(--mono); color: var(--muted); animation: rise .8s .45s both; }
 .intro-live b { color: var(--text); } .intro-live b.saved { color: var(--lime); font-size: 14px; }
@@ -332,3 +332,34 @@ button { font: inherit; color: inherit; }
 .tour-chips button.on { background: var(--cyan); color: #04121a; border-color: var(--cyan); } .tour-chips button.on i { color: #04121a; }
 .scene3d .stage-counter, .tour-chips, .scene-hint { z-index: 20; }
 .tag3d { font-size: 11px; padding: 2px 7px; }
+
+/* ---------- snap ---------- */
+.snap-btn { margin-left: auto; border: 1px solid #c8ff3d77; background: var(--lime-dim); color: var(--lime); border-radius: 9px; height: 32px; padding: 0 12px; font: 700 12.5px var(--display); cursor: pointer; animation: glowpulse 2.6s ease-in-out infinite; }
+.snap-btn + .mute { margin-left: 8px; }
+@keyframes glowpulse { 50% { box-shadow: 0 0 18px -2px #c8ff3d88; } }
+.snap-backdrop { position: fixed; inset: 0; z-index: 50; background: #02040799; backdrop-filter: blur(8px); display: grid; place-items: center; padding: 16px; animation: fade .2s both; }
+.snap-modal { position: relative; width: min(860px, 100%); border-radius: 22px; border: 1px solid var(--line2); background: #070b11f5; padding: 28px; box-shadow: 0 40px 120px -20px #000; animation: rise .35s both; }
+.snap-modal .x { position: absolute; top: 16px; right: 18px; background: none; border: 0; color: var(--muted); font-size: 16px; cursor: pointer; }
+.snap-modal h2 { font: 700 34px/1.05 var(--display); letter-spacing: -.03em; margin: 10px 0 22px; }
+.snap-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.qr { border: 1px solid var(--line2); border-radius: 16px; padding: 18px; text-align: center; background: #0b121b; }
+.qr img, .qr-ph { width: 210px; height: 210px; border-radius: 12px; display: block; margin: 0 auto 12px; background: #fff; }
+.qr p { font-size: 13px; color: var(--muted); margin: 0 0 10px; } .qr p b { color: var(--text); }
+.waiting { display: inline-flex; align-items: center; gap: 8px; font: 500 11px var(--mono); color: var(--lime); }
+.drop { display: grid; place-content: center; text-align: center; gap: 6px; border: 2px dashed var(--line2); border-radius: 16px; cursor: pointer; padding: 20px; transition: all .15s; min-height: 300px; }
+.drop:hover, .drop.over { border-color: var(--lime); background: var(--lime-dim); }
+.drop-icon { font-size: 34px; color: var(--lime); }
+.drop b { font: 700 17px var(--display); } .drop small { color: var(--muted); font-size: 12px; }
+.snap-foot { margin: 16px 0 0; font-size: 12px; color: var(--dim); }
+@media (max-width: 700px) { .snap-cols { grid-template-columns: 1fr; } .drop { min-height: 160px; } }
+.phone { position: relative; z-index: 1; min-height: 100vh; padding: 22px 18px 40px; max-width: 520px; margin: auto; display: flex; flex-direction: column; }
+.phone-brand { display: flex; align-items: center; gap: 10px; font: 700 18px var(--display); margin-bottom: 26px; }
+.phone h1 { font: 700 32px/1.05 var(--display); letter-spacing: -.03em; margin: 0 0 12px; }
+.phone p { color: var(--muted); font-size: 15px; margin: 0 0 20px; }
+.phone-preview { width: 100%; max-height: 46vh; object-fit: contain; border-radius: 14px; border: 1px solid var(--line2); margin-bottom: 16px; background: #fff; }
+.phone-actions { display: grid; gap: 10px; margin-top: auto; }
+.phone-actions label, .phone-actions button { text-align: center; }
+.btn-primary.big { padding: 18px; font-size: 17px; border-radius: 14px; display: block; }
+.phone-err { color: var(--amber); margin-top: 12px; }
+.phone-done { text-align: center; margin-top: 12vh; }
+.big-check { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 18px; background: var(--lime); color: #071006; font-size: 48px; font-weight: 800; box-shadow: 0 0 60px -6px var(--lime); animation: stamp .5s cubic-bezier(.2, 1.6, .4, 1); }

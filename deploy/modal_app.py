@@ -47,7 +47,7 @@ runs = modal.Volume.from_name("plansight-runs", create_if_missing=True)
 
 
 @app.function(cpu=2.0, memory=4096, timeout=300, min_containers=1 if os.getenv("KEEP_WARM") == "1" else 0,
-              scaledown_window=600, volumes={"/root/runs": runs}, secrets=[addon_keys])
+              scaledown_window=600, max_containers=1, volumes={"/root/runs": runs}, secrets=[addon_keys])
 @modal.concurrent(max_inputs=16)
 @modal.asgi_app(label="plansight")
 def web():

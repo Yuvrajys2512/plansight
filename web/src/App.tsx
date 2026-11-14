@@ -3,6 +3,7 @@ import './App.css';
 import Voice from './Voice';
 import Scene3D, { type FlyRequest, type Highlight, type RoomInfo } from './Scene3D';
 import { sfx } from './sfx';
+import { PhoneSnap, SnapModal, type SnapInfo } from './Snap';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
@@ -61,7 +62,7 @@ function CostRace({ cost, naive, k, label = 'naive frontier model, full sheet', 
   </div>;
 }
 
-function Intro({ onEnter, onBench, stats }: { onEnter: () => void; onBench: () => void; stats: Stats | null }) {
+function Intro({ onEnter, onBench, onSnap, stats }: { onEnter: () => void; onBench: () => void; onSnap: () => void; stats: Stats | null }) {
   const pct = useCountUp(43, 1600, 'intro');
   const saved = useCountUp(Math.max(0, (stats?.naive_cost_usd ?? 0) - (stats?.cost_usd ?? 0)), 2200, stats?.questions);
   return <div className="intro">
@@ -72,12 +73,18 @@ function Intro({ onEnter, onBench, stats }: { onEnter: () => void; onBench: () =
       <p>Bigger models won't fix that. It's a perception problem, not a reasoning one. <b>PlanSight</b> answers questions about construction drawings with fine-tuned detectors, exact geometry and NVIDIA Nemotron, <b>shows you every item it counted</b>, and costs a fraction of a cent.</p>
       <div className="intro-stats"><div><b>62%</b><span>PlanSight on unseen plans<br />(best frontier: 65%)</span></div><div><b>1/60</b><span>of the cost of the<br />cheapest frontier model</span></div><div><b>99.5%</b><span>on Stoa's vector plans<br />and IFC models, $0</span></div></div>
       {stats?.enabled && (stats.questions ?? 0) > 0 && <div className="intro-live"><i className="pulse" />Live at Junction: <b>{(stats.questions ?? 0).toLocaleString()}</b> questions answered by visitors · <b>{money(stats.cost_usd ?? 0)}</b> spent · <b className="saved">{money(saved)}</b> saved vs a frontier model <em>Aiven Postgres</em></div>}
-      <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Ask a drawing →</button><button className="btn-ghost" onClick={onBench}>Race the frontier models</button></div>
+      <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Ask a drawing →</button><button className="btn-ghost" onClick={onBench}>Race the frontier models</button><button className="btn-ghost" onClick={onSnap}>📷 Snap your own plan</button></div>
     </div>
   </div>;
 }
 
 function App() {
+  const phoneSession = new URLSearchParams(location.search).get('snap');
+  if (phoneSession) return <PhoneSnap session={phoneSession} />;
+  return <MainApp />;
+}
+
+function MainApp() {
   const [intro, setIntro] = useState(() => !new URLSearchParams(location.search).has('skip'));
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [selected, setSelected] = useState<Drawing | null>(null);
@@ -97,6 +104,9 @@ function App() {
   const [drag, setDrag] = useState<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
   const [mode3d, setMode3d] = useState(false);
+  const [snapOpen, setSnapOpen] = useState(false);
+  const [pendingAsk, setPendingAsk] = useState<{ path: string; q: string } | null>(null);
+  const [autoLift, setAutoLift] = useState(false);
   const [fly, setFly] = useState<FlyRequest>(null);
   const roomsRef = useRef<RoomInfo[]>([]);
   const [view, setView] = useState<'demo' | 'aecv'>('demo');
@@ -191,8 +201,16 @@ function App() {
     if (!hit) return `No drawing matches "${query}". Available: ${drawings.map(d => d.title).join(', ')}`;
     setView('demo'); setSelected(hit); return `Opened ${hit.title} (${sourceNames[hit.source] || hit.source}).`;
   };
-  const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null };
-  const can3d = selected?.source === 'swiss_dwellings' || selected?.source === 'ifc_models';
+  const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null, boxes: evidence.filter((_, i) => !rejectedMain.includes(i)).map(e => e.bbox) };
+  const can3d = !!selected && ['swiss_dwellings', 'ifc_models', 'cubicasa5k'].includes(selected.source);
+  const onSnap = (s: SnapInfo) => {
+    setSnapOpen(false); sfx.whoosh();
+    const d: Drawing = { path: s.path, source: 'cubicasa5k', title: `📷 Your plan · ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`, thumbnail_url: `/api/render?path=${encodeURIComponent(s.path)}&page=0`, sample_question: s.warped ? 'Straightened from your photo' : 'Uploaded plan' };
+    setDrawings(v => [d, ...v]); setIntro(false); setView('demo'); setSelected(d);
+    setPendingAsk({ path: s.path, q: 'How many doors are shown on this floor plan?' }); setAutoLift(true);
+  };
+  useEffect(() => { if (pendingAsk && selected?.path === pendingAsk.path && !busy) { const q = pendingAsk.q; setPendingAsk(null); setTimeout(() => void ask(q), 600); } }, [selected, pendingAsk]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (autoLift && answer && revealDone) { const t = setTimeout(() => { setAutoLift(false); sfx.whoosh(); setMode3d(true); }, 1500); return () => clearTimeout(t); } }, [autoLift, answer, revealDone]);
   const flyTo = (room: string) => {
     if (!selected || selected.source !== 'swiss_dwellings') return 'Fly-through works on the Swiss floor plans. Open one first (for example: open the Swiss plan).';
     if (!mode3d) { sfx.whoosh(); setMode3d(true); }
@@ -221,11 +239,12 @@ function App() {
   const header = <header className="topbar">
     <button className="brand" onClick={() => setIntro(true)}><span className="brandmark">◎</span><span><b>PlanSight</b><small>make blueprints talk</small></span></button>
     <nav className="tabs"><button className={view === 'demo' ? 'on' : ''} onClick={() => setView('demo')}>Ask a drawing</button><button className={view === 'aecv' ? 'on' : ''} onClick={() => setView('aecv')}>Frontier vs PlanSight</button></nav>
+    <button className="snap-btn" onClick={() => setSnapOpen(true)}>📷 Snap your own plan</button>
     <button className="mute" title={muted ? 'Sound off' : 'Sound on'} onClick={() => sfx.setMuted(!muted)}>{muted ? '🔇' : '🔊'}</button>
     <div className="ticker">{stats?.enabled && stats.questions ? <><i className="pulse" /><b>{stats.questions.toLocaleString()}</b> questions · <b>{money(stats.cost_usd ?? 0)}</b> spent vs <b>{money(stats.naive_cost_usd ?? 0)}</b> frontier · <b>{stats.corrections ?? 0}</b> corrections <em>Aiven Postgres</em></> : <><i className="pulse" />live · CPU · scales to zero</>}</div>
   </header>;
 
-  if (intro) return <Intro stats={stats} onEnter={() => { sfx.whoosh(); setIntro(false); setView('demo'); }} onBench={() => { sfx.whoosh(); setIntro(false); setView('aecv'); }} />;
+  if (intro) return <>{snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}<Intro onSnap={() => setSnapOpen(true)} stats={stats} onEnter={() => { sfx.whoosh(); setIntro(false); setView('demo'); }} onBench={() => { sfx.whoosh(); setIntro(false); setView('aecv'); }} /></>;
 
   if (view === 'aecv') return <main className="shell">{header}
     <section className="scoreboard">
@@ -267,6 +286,7 @@ function App() {
             </svg>}
           </div>
         </div>
+        {snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}
         <p className="hint">Every count is a box you can check. <b>Tap a box</b> to reject it, the count updates and the correction is logged as training data. {plansightRight ? '' : plan.plansight[aecvKind]?.note || ''}</p>
       </section>
     </div>}
@@ -326,6 +346,7 @@ function App() {
       </aside>
     </div>
     <Voice ask={ask} openDrawing={openDrawing} flyTo={flyTo} context={voiceContext} />
+    {snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}
   </main>;
 }
 
