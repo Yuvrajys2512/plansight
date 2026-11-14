@@ -75,6 +75,33 @@ cost, and every count is boxed on the plan so a human can check it.** It does no
 Claude Fable 5 and GPT-5.5 are wrong and PlanSight is right. Full tables (A, B, all, clean): `runs/aecv-report/report.md`
 (regenerate with `scripts/aecv_report.py`).
 
+### Cheap first, escalate when unsure: PlanSight + a frontier model beats the frontier model
+
+PlanSight knows when it's unsure: a door symbol scoring right at the detector's threshold, several borderline windows,
+or the room readers disagreeing. Only those plans go to Gemini 3.5 Flash, and only the unsure kinds take its answer
+(`plansight/escalate.py`). The rule was tuned on split A only, and split B was scored once.
+
+| Held-out split B | Door | Window | Toilet | Bedroom | Mean | $/plan |
+|---|---|---|---|---|---|---|
+| Best frontier model per kind | 47 (Gemini 3 Pro) | 38 (Gemini 3.5 Flash) | 90 | 93 | 65 | $0.031 |
+| PlanSight alone | 43 | 38 | 80 | 85 | 62 | $0.0005 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | **48** | **43** | 80 | 90 | **65** | **$0.027** |
+| same, clean split B (best frontier: 47 / 43 / 92 / 96, mean 68) | **49** | **47** | 80 | 92 | 67 | $0.027 |
+
+**On doors and windows, where every frontier model fails, the combination beats every published frontier model on
+plans it never saw, and costs less than Gemini alone.** The overall mean ties the best frontier model. Toilets keep
+PlanSight's answer because it beat Gemini on the tuning split; on split B Gemini was better there.
+
+Two honest caveats:
+- Escalated answers are AECV-Bench's **published** Gemini 3.5 Flash answers (same model, same prompt, run by the
+  benchmark authors), not our own calls.
+- Our own live call is wired up, but a 22-plan check got doors right 2/22 vs 10/22 for the published run. We had
+  downscaled the image to JPEG, which loses thin door arcs. It now sends the original file with schema-enforced JSON,
+  as the benchmark did. The free API tier (20 requests/day) ran out before a full live re-run.
+
+It escalates 83% of plans, so for bulk work PlanSight alone ($0.0005) is the cheap tier. The value of escalation is
+accuracy and boxes, not price.
+
 **What we tried overnight to beat it (all logged in `runs/model-improvement.md`, none kept).** Each change was tuned
 on split A only and had to hold up on held-out B and on the CubiCasa test split:
 

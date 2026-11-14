@@ -140,6 +140,22 @@ def main():
         ours[n] = {k: len(v) for k, v in res.items()}
         our_cost[n] = c
     systems["**PlanSight hybrid**"] = (ours, sum(our_cost.values()) / len(our_cost))
+    # Cheap first, escalate when unsure (plansight/escalate.py; rule tuned on split A only). Escalated kinds take
+    # Gemini 3.5 Flash's answer from AECV-Bench's published run of that model (same prompt as our live call).
+    from plansight.escalate import USD_PER_CALL, unsure_kinds
+    gem = fr.get("gemini_35_flash", {})
+    esc, esc_cost = {}, {}
+    for n in gold:
+        _, _, _, tr = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
+        uk = unsure_kinds([(x[0], x[1]) for x in (det.get(n) or {}).get("dets", [])],
+                          {"bedroom": [v for v in tr["Bedroom"]["voters"].values() if isinstance(v, int)]})
+        esc[n] = dict(ours[n])
+        for k in uk:
+            v = (gem.get(n) or {}).get(k.capitalize())
+            if isinstance(v, (int, float)):
+                esc[n][k.capitalize()] = int(v)
+        esc_cost[n] = our_cost[n] + (USD_PER_CALL if uk else 0.0)
+    systems["**PlanSight + Gemini 3.5 Flash when unsure**"] = (esc, sum(esc_cost.values()) / len(esc_cost))
 
     lines = ["# AECV-Bench object counting: frontier models vs PlanSight", "",
              "Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **split B (60 plans) was "

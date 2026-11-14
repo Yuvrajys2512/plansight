@@ -19,6 +19,7 @@ Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **spl
 | nemotron_3.5_super_vl (v0-1536, self-hosted) | 16% | 8% | 61% | 86% | 43% | $0.00019 |
 | PlanSight detector only (zero-shot) | 39% | 33% | 57% | n/a | 43% | $0.00006 |
 | **PlanSight hybrid** | 39% | 41% | 80% | 88% | 62% | $0.00050 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | 49% | 47% | 80% | 92% | 67% | $0.02667 |
 
 ## Split B (60 plans)
 
@@ -35,6 +36,7 @@ Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **spl
 | nemotron_3.5_super_vl (v0-1536, self-hosted) | 13% | 7% | 55% | 82% | 39% | $0.00019 |
 | PlanSight detector only (zero-shot) | 43% | 33% | 62% | n/a | 46% | $0.00006 |
 | **PlanSight hybrid** | 43% | 38% | 80% | 85% | 62% | $0.00050 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | 48% | 43% | 80% | 90% | 65% | $0.02667 |
 
 ## Split A (60 plans)
 
@@ -51,6 +53,7 @@ Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **spl
 | nemotron_3.5_super_vl (v0-1536, self-hosted) | 10% | 10% | 57% | 82% | 40% | $0.00019 |
 | PlanSight detector only (zero-shot) | 33% | 32% | 72% | n/a | 46% | $0.00006 |
 | **PlanSight hybrid** | 33% | 38% | 87% | 90% | 62% | $0.00050 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | 48% | 42% | 87% | 93% | 68% | $0.02667 |
 
 ## Split all clean (100 plans)
 
@@ -67,6 +70,7 @@ Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **spl
 | nemotron_3.5_super_vl (v0-1536, self-hosted) | 13% | 10% | 61% | 89% | 43% | $0.00019 |
 | PlanSight detector only (zero-shot) | 31% | 31% | 61% | n/a | 41% | $0.00006 |
 | **PlanSight hybrid** | 31% | 41% | 84% | 91% | 62% | $0.00050 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | 46% | 45% | 84% | 93% | 67% | $0.02667 |
 
 ## Split all (120 plans)
 
@@ -83,3 +87,4 @@ Exact-match accuracy. Split A (60 plans) tuned PlanSight's counting rules; **spl
 | nemotron_3.5_super_vl (v0-1536, self-hosted) | 12% | 8% | 56% | 82% | 39% | $0.00019 |
 | PlanSight detector only (zero-shot) | 38% | 32% | 67% | n/a | 46% | $0.00006 |
 | **PlanSight hybrid** | 38% | 38% | 83% | 88% | 62% | $0.00050 |
+| **PlanSight + Gemini 3.5 Flash when unsure** | 48% | 42% | 83% | 92% | 66% | $0.02667 |
