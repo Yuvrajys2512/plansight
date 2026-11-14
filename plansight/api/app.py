@@ -293,6 +293,23 @@ def ask(request: AskRequest):
     return result
 
 
+@app.get("/api/voice/token")
+def voice_token():
+    """Short-lived WebRTC token for the ElevenLabs voice agent; the API key never reaches the browser."""
+    import os
+
+    import httpx
+
+    key, agent = os.getenv("ELEVENLABS_API_KEY"), os.getenv("ELEVENLABS_AGENT_ID")
+    if not key or not agent:
+        raise HTTPException(503, "Voice mode is not configured.")
+    r = httpx.get("https://api.elevenlabs.io/v1/convai/conversation/token", params={"agent_id": agent},
+                  headers={"xi-api-key": key}, timeout=15)
+    if r.status_code >= 400:
+        raise HTTPException(502, "Voice service unavailable.")
+    return {"token": r.json()["token"]}
+
+
 @app.get("/api/stats")
 def stats():
     """Live usage from Aiven Postgres: questions answered, total cost vs a frontier model, corrections."""

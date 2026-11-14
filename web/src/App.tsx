@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import './App.css';
+import Voice from './Voice';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
@@ -132,8 +133,8 @@ function App() {
   const rolled = useCountUp(Number.isFinite(numeric) ? numeric : 0, 1500, answerKey);
   const thinkLines = thinking[selected?.source || 'cubicasa5k'] || thinking.cubicasa5k;
 
-  const ask = async (q: string = question) => {
-    if (!selected || !q.trim() || busy) return;
+  const ask = async (q: string = question): Promise<Answer | null> => {
+    if (!selected || !q.trim() || busy) return null;
     setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]);
     const minWait = new Promise(r => setTimeout(r, 1300)); // let the "thinking" trace play even on $0 instant answers
     try {
@@ -149,7 +150,8 @@ function App() {
         const dx = ((x0 + x1) / 2) * sx - img.clientWidth / 2, dy = ((y0 + y1) / 2) * sy - img.clientHeight / 2;
         setTimeout(() => { setZoom(z); setOffset({ x: -dx * z, y: -dy * z }); }, 900);
       }
-    } catch { await minWait; setAnswer({ abstained: true, reason: 'The API could not be reached.' }); setAnswerKey(k => k + 1); }
+      return result;
+    } catch { await minWait; const a = { abstained: true, reason: 'The API could not be reached.' }; setAnswer(a); setAnswerKey(k => k + 1); return a; }
     finally { setBusy(false); }
   };
 
@@ -164,6 +166,14 @@ function App() {
     ['Evidence', evidence.length ? `${Math.min(shown, evidence.length)} / ${evidence.length} regions` : answer.model_fact ? 'IFC element' : 'text layer', shown > 0 || !evidence.length],
     ['Answer', `${String(answer.value)} ${answer.unit && answer.unit !== 'count' ? answer.unit : ''}`, revealDone],
   ] : [];
+
+  const openDrawing = (query: string) => {
+    const q = query.toLowerCase(); const words = q.split(/\s+/).filter(Boolean);
+    const hit = drawings.find(d => words.every(w => `${d.title} ${d.source} ${d.path}`.toLowerCase().includes(w))) || drawings.find(d => words.some(w => `${d.title} ${d.source}`.toLowerCase().includes(w)));
+    if (!hit) return `No drawing matches "${query}". Available: ${drawings.map(d => d.title).join(', ')}`;
+    setView('demo'); setSelected(hit); return `Opened ${hit.title} (${sourceNames[hit.source] || hit.source}).`;
+  };
+  const voiceContext = selected ? `${selected.title} (${sourceNames[selected.source] || selected.source}${selected.is_model ? ', 3D IFC model' : ''}). Example question: ${examples[0] || selected.sample_question || ''}` : 'none';
 
   // ---------- AECV benchmark view ----------
   const plan = aecv[aecvPlan];
@@ -285,6 +295,7 @@ function App() {
         <div className="note"><span>✦</span> Every answer is pinned to a region of the drawing you can check in seconds. If the evidence is weak, PlanSight abstains instead of guessing.</div>
       </aside>
     </div>
+    <Voice ask={ask} openDrawing={openDrawing} context={voiceContext} />
   </main>;
 }
 
