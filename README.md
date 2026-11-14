@@ -53,19 +53,42 @@ answer + evidence boxes on the sheet + cost of the question  →  reviewer click
 | Multilingual router (held-out) | 99.8% | $0 for 87% of questions |
 | ifc_bench | not handled yet | – |
 
-**AECV-Bench, held-out split B** (60 plans we never tuned on; frontier numbers are the published AECV results):
+**AECV-Bench, held-out split B** (plans we never tuned on; frontier numbers are the published AECV results).
 
-| System | Door | Window | Toilet | Bedroom | Mean | $/plan |
-|---|---|---|---|---|---|---|
-| Gemini 3.5 Flash | 43 | 38 | 85 | 93 | 65% | $0.031 |
-| Claude Fable 5 | 42 | 33 | 87 | 93 | 64% | $0.077 |
-| GPT-5.5 | 35 | 32 | 78 | 92 | 59% | $0.224 |
-| Nemotron 3.5 Super VL alone | 13 | 7 | 55 | 82 | 39% | $0.0002 |
-| **PlanSight** | **43** | **38** | 80 | 85 | **62%** | **$0.0005** |
+**Leakage audit first.** AECV-Bench reuses some CubiCasa5K plans, which is also our detector's training data. A
+perceptual-hash match (`scripts/aecv_leakage.py`, dHash 16×16, Hamming ≤ 20, clean gap to the next-nearest) finds
+**33 of 120 AECV plans are CubiCasa5K images, 20 of them in our training split**. The *clean* columns drop those 20
+plans for every system. **Clean is the number we stand behind.**
 
-**Frontier-level accuracy at 1/60 to 1/450 of the cost, and every count is boxed on the plan.** On 31 plan/question
-pairs all three frontier models above are wrong and PlanSight is right. Full table: `runs/aecv-report/report.md`
+| System | Door | Window | Toilet | Bedroom | Mean (clean B, 51 plans) | Mean (all B, 60) | $/plan |
+|---|---|---|---|---|---|---|---|
+| Gemini 3.5 Flash | 45 | 43 | 88 | 96 | 68% | 65% | $0.031 |
+| Gemini 3 Pro | **47** | 35 | 92 | 94 | 67% | 65% | n/a |
+| Claude Fable 5 | 43 | 37 | 90 | 96 | 67% | 64% | $0.077 |
+| GPT-5.5 | 37 | 35 | 86 | 94 | 63% | 59% | $0.224 |
+| Nemotron 3.5 Super VL alone | 16 | 8 | 61 | 86 | 43% | 39% | $0.0002 |
+| **PlanSight** | 39 | 41 | 80 | 88 | **62%** | **62%** | **$0.0005** |
+
+Per-kind columns are clean split B. **PlanSight is within ~6 points of the best frontier model at 1/60 to 1/450 of the
+cost, and every count is boxed on the plan so a human can check it.** It does not beat frontier yet: Gemini 3 Pro's
+47% on doors is the best door score. On 27 plan/question pairs of the 100 clean plans, all of Gemini 3.5 Flash,
+Claude Fable 5 and GPT-5.5 are wrong and PlanSight is right. Full tables (A, B, all, clean): `runs/aecv-report/report.md`
 (regenerate with `scripts/aecv_report.py`).
+
+**What we tried overnight to beat it (all logged in `runs/model-improvement.md`, none kept).** Each change was tuned
+on split A only and had to hold up on held-out B and on the CubiCasa test split:
+
+| Change | Split A (door/window) | Held-out result | Verdict |
+|---|---|---|---|
+| Re-tuned thresholds + one opening found as door *and* window counted once | 33/38 → 42/42 | B 43/38 → 43/33 | A gain was noise at n=60 |
+| SAHI tiled inference (arXiv 2202.06934) on big sheets | 30/40 | not run | worse on A, 9× CPU |
+| Window must sit in a wall (OpenCV wall mask) | windows 38 → ≤38 | not run | no gain |
+| **Retrained detector v2 on Verda**: native-res tiles + style augmentation (grayscale, line weight, blur, JPEG, hatching) | best 32/43 | CubiCasa test window 49 → 42 | rejected |
+| v1 + v2 ensemble (box fusion) | best 37/40 | not run | below v1 |
+
+The shipped detector is unchanged. The lesson for the next iteration is data, not tricks. The misses concentrate on
+drawing styles the detector never saw (AECV source group 4000: doors right on 1/17 plans), and the fix is labelled
+plans in those styles. The reviewer-correction log in the demo (`feedback.jsonl`) is built to collect them.
 
 ## How Nemotron's role was found (the eval loop)
 
