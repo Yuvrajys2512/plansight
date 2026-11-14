@@ -63,12 +63,18 @@ def plansight(name, det, ocr, nemo, rooms):
     reading the whole plan) rarely invent rooms but each misses some -> max. Toilets: same three readers -> median.
     (A v1 where Nemotron reclassified every door/window crop helped split A but hurt split B: dropped, see report.)
     """
-    res, notes = {}, {}
+    res, notes, trace = {}, {}, {}
     d, o, rm, nm = det.get(name) or {}, ocr.get(name) or {}, rooms.get(name) or {}, nemo.get(name) or {}
     dets = d.get("dets", [])
     res["Door"] = [{"bbox": x[2:], "label": f"door {x[1]:.2f}"} for x in dets if x[0] == "door" and x[1] >= TD]
     wins = [x[2:] for x in dets if x[0] == "window" and x[1] >= TW]
     res["Window"] = [{"bbox": list(b), "label": "window"} for b in merge_adjacent(wins, GAP)]
+    n_doors = sum(1 for x in dets if x[0] == "door" and x[1] >= TD)
+    trace["Door"] = {"rule": "detector", "voters": {"detector": n_doors, "nemotron": nm.get("pred", {}).get("Door")},
+                     "used": "detector"}
+    trace["Window"] = {"rule": "detector + merge touching", "voters": {
+        "detector": len(wins), "nemotron": nm.get("pred", {}).get("Window")}, "used": "detector",
+        "after_merge": len(res["Window"])}
     toks = [(t, c, b) for t, c, *b in o.get("tokens", [])]
     n_pred = nm.get("pred", {})
     bed = {"labels": [{"bbox": list(b), "label": t} for t, b in find_labels(toks, "bedroom")],
@@ -77,7 +83,11 @@ def plansight(name, det, ocr, nemo, rooms):
     nb = n_pred.get("Bedroom") or 0
     best = max(bed, key=lambda k: len(bed[k]))
     res["Bedroom"] = bed[best]
+    trace["Bedroom"] = {"rule": "max of 3 readers", "voters": {"OCR labels": len(bed["labels"]),
+                        "rooms model": len(bed["rooms model"]), "nemotron": nb},
+                        "used": {"labels": "OCR labels"}.get(best, best)}
     if nb > len(bed[best]):
+        trace["Bedroom"]["used"] = "nemotron"
         notes["Bedroom"] = f"Nemotron read {nb} bedrooms on the plan; {len(bed[best])} located"
         res["Bedroom"] = bed[best] + [{"bbox": None, "label": "Nemotron (unlocated)"}] * (nb - len(bed[best]))
     wc = {"labels": [{"bbox": list(b), "label": t} for t, b in find_labels(toks, "toilet")],
@@ -85,9 +95,13 @@ def plansight(name, det, ocr, nemo, rooms):
     nt = n_pred.get("Toilet") or 0
     med = sorted([len(wc["labels"]), len(wc["symbols"]), nt])[1]
     pick = min(wc.values(), key=lambda v: (abs(len(v) - med), -len(v)))
+    trace["Toilet"] = {"rule": "median of 3 readers", "voters": {"OCR labels": len(wc["labels"]),
+                       "symbol detector": len(wc["symbols"]), "nemotron": nt},
+                       "used": [k for k, v in {"OCR labels": len(wc["labels"]), "symbol detector": len(wc["symbols"]),
+                                               "nemotron": nt}.items() if v == med]}
     res["Toilet"] = (pick + [{"bbox": None, "label": "Nemotron (unlocated)"}] * med)[:med]
     cost = (8 + 3) * CPU_USD_PER_S + (nm.get("cost_usd") or 0.0)  # CPU OCR + 2 detector passes + one Nemotron read
-    return res, notes, cost
+    return res, notes, cost, trace
 
 
 def main():
@@ -120,7 +134,7 @@ def main():
     systems["PlanSight detector only (zero-shot)"] = (det_only, 2 * CPU_USD_PER_S)
     ours, our_cost = {}, {}
     for n in gold:
-        res, _, c = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
+        res, _, c, _t = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
         ours[n] = {k: len(v) for k, v in res.items()}
         our_cost[n] = c
     systems["**PlanSight hybrid**"] = (ours, sum(our_cost.values()) / len(our_cost))
@@ -147,14 +161,19 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
     (out / "report.md").write_text("\n".join(lines), encoding="utf-8")
     ui = {}
+    nm_rows = nemo.get("v0-1536", {})
     for n, img, g in plans:
-        res, notes, c = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
-        ui[n] = {"image": img, "split": split[n], "gold": {k: g.get(k) for k in KINDS},
+        res, notes, c, trace = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
+        ui[n] = {"image": f"img/{n}.jpg", "split": split[n], "gold": {k: g.get(k) for k in KINDS},
                  "frontier": {m: {k: fr[m].get(n, {}).get(k) for k in KINDS} for m in SHOW if m in fr},
                  "frontier_cost_usd": {m: fcost.get(m) for m in SHOW if m in fr},
                  "plansight": {k: {"count": len(v), "evidence": [e for e in v if e["bbox"]], "note": notes.get(k)}
                                for k, v in res.items()},
-                 "plansight_cost_usd": c}
+                 "plansight_cost_usd": c,
+                 "nemotron": ({"counts": {k: nm_rows[n]["pred"].get(k) for k in KINDS},
+                              "cost_usd": nm_rows[n].get("cost_usd"), "latency_ms": nm_rows[n].get("latency_ms"),
+                              "model": "Nemotron 3.5 Super VL (NVFP4, self-hosted on Verda)"} if n in nm_rows else None),
+                 "trace": trace}
     (out / "plans.json").write_text(json.dumps(ui), encoding="utf-8")
     print("\n".join(lines))
 
