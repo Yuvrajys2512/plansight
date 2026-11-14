@@ -1,0 +1,711 @@
+{
+ "threshold": 20,
+ "n_aecv": 120,
+ "n_cubicasa": 4787,
+ "matches": {
+  "5000_0001": {
+   "cubicasa": "high_quality_architectural-451",
+   "hamming": 7,
+   "split": "train"
+  },
+  "5000_0002": {
+   "cubicasa": "high_quality_architectural-499",
+   "hamming": 1,
+   "split": "train"
+  },
+  "5000_0003": {
+   "cubicasa": "high_quality_architectural-591",
+   "hamming": 10,
+   "split": "test"
+  },
+  "5000_0004": {
+   "cubicasa": "high_quality_architectural-1021",
+   "hamming": 10,
+   "split": "train"
+  },
+  "5000_0005": {
+   "cubicasa": "high_quality_architectural-1321",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0006": {
+   "cubicasa": "high_quality_architectural-1345",
+   "hamming": 5,
+   "split": "train"
+  },
+  "5000_0007": {
+   "cubicasa": "high_quality_architectural-1581",
+   "hamming": 4,
+   "split": "train"
+  },
+  "5000_0008": {
+   "cubicasa": "high_quality_architectural-1765",
+   "hamming": 0,
+   "split": "train"
+  },
+  "5000_0009": {
+   "cubicasa": "high_quality_architectural-1951",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0010": {
+   "cubicasa": "high_quality_architectural-2550",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0011": {
+   "cubicasa": "high_quality_architectural-2567",
+   "hamming": 8,
+   "split": "val"
+  },
+  "5000_0012": {
+   "cubicasa": "high_quality_architectural-2572",
+   "hamming": 10,
+   "split": "val"
+  },
+  "5000_0013": {
+   "cubicasa": "high_quality_architectural-3691",
+   "hamming": 0,
+   "split": "val"
+  },
+  "5000_0014": {
+   "cubicasa": "high_quality_architectural-3842",
+   "hamming": 4,
+   "split": "train"
+  },
+  "5000_0015": {
+   "cubicasa": "high_quality_architectural-3883",
+   "hamming": 6,
+   "split": "train"
+  },
+  "5000_0016": {
+   "cubicasa": "high_quality_architectural-4741",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0017": {
+   "cubicasa": "high_quality_architectural-4947",
+   "hamming": 5,
+   "split": "train"
+  },
+  "5000_0018": {
+   "cubicasa": "high_quality_architectural-4972",
+   "hamming": 2,
+   "split": "val"
+  },
+  "5000_0019": {
+   "cubicasa": "high_quality_architectural-5521",
+   "hamming": 8,
+   "split": "val"
+  },
+  "5000_0021": {
+   "cubicasa": "high_quality_architectural-6220",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0022": {
+   "cubicasa": "high_quality_architectural-6588",
+   "hamming": 4,
+   "split": "train"
+  },
+  "5000_0023": {
+   "cubicasa": "high_quality_architectural-6675",
+   "hamming": 0,
+   "split": "val"
+  },
+  "5000_0024": {
+   "cubicasa": "high_quality_architectural-7677",
+   "hamming": 3,
+   "split": "val"
+  },
+  "5000_0025": {
+   "cubicasa": "high_quality_architectural-7820",
+   "hamming": 10,
+   "split": "val"
+  },
+  "5000_0026": {
+   "cubicasa": "high_quality_architectural-8416",
+   "hamming": 5,
+   "split": "train"
+  },
+  "5000_0027": {
+   "cubicasa": "high_quality_architectural-8675",
+   "hamming": 12,
+   "split": "val"
+  },
+  "5000_0028": {
+   "cubicasa": "high_quality_architectural-9121",
+   "hamming": 4,
+   "split": "train"
+  },
+  "5000_0030": {
+   "cubicasa": "high_quality_architectural-9347",
+   "hamming": 6,
+   "split": "val"
+  },
+  "5000_0031": {
+   "cubicasa": "high_quality_architectural-9443",
+   "hamming": 3,
+   "split": "test"
+  },
+  "5000_0032": {
+   "cubicasa": "high_quality_architectural-9483",
+   "hamming": 6,
+   "split": "val"
+  },
+  "5000_0033": {
+   "cubicasa": "high_quality_architectural-9620",
+   "hamming": 3,
+   "split": "train"
+  },
+  "5000_0034": {
+   "cubicasa": "high_quality_architectural-9977",
+   "hamming": 4,
+   "split": "train"
+  },
+  "5000_0035": {
+   "cubicasa": "high_quality_architectural-10335",
+   "hamming": 5,
+   "split": "train"
+  }
+ },
+ "train_overlap": [
+  "5000_0001",
+  "5000_0002",
+  "5000_0004",
+  "5000_0005",
+  "5000_0006",
+  "5000_0007",
+  "5000_0008",
+  "5000_0009",
+  "5000_0010",
+  "5000_0014",
+  "5000_0015",
+  "5000_0016",
+  "5000_0017",
+  "5000_0021",
+  "5000_0022",
+  "5000_0026",
+  "5000_0028",
+  "5000_0033",
+  "5000_0034",
+  "5000_0035"
+ ],
+ "any_cubicasa_overlap": [
+  "5000_0001",
+  "5000_0002",
+  "5000_0003",
+  "5000_0004",
+  "5000_0005",
+  "5000_0006",
+  "5000_0007",
+  "5000_0008",
+  "5000_0009",
+  "5000_0010",
+  "5000_0011",
+  "5000_0012",
+  "5000_0013",
+  "5000_0014",
+  "5000_0015",
+  "5000_0016",
+  "5000_0017",
+  "5000_0018",
+  "5000_0019",
+  "5000_0021",
+  "5000_0022",
+  "5000_0023",
+  "5000_0024",
+  "5000_0025",
+  "5000_0026",
+  "5000_0027",
+  "5000_0028",
+  "5000_0030",
+  "5000_0031",
+  "5000_0032",
+  "5000_0033",
+  "5000_0034",
+  "5000_0035"
+ ],
+ "nearest": {
+  "0000-0001": {
+   "cubicasa": "high_quality_architectural-13360",
+   "hamming": 89
+  },
+  "0000-0002": {
+   "cubicasa": "high_quality_architectural-11450",
+   "hamming": 91
+  },
+  "0000-0003": {
+   "cubicasa": "high_quality-10669",
+   "hamming": 78
+  },
+  "0000-0004": {
+   "cubicasa": "high_quality_architectural-9097",
+   "hamming": 88
+  },
+  "0000-0005": {
+   "cubicasa": "high_quality_architectural-1109",
+   "hamming": 77
+  },
+  "2000-0001": {
+   "cubicasa": "colorful-1554",
+   "hamming": 88
+  },
+  "2000-0002": {
+   "cubicasa": "high_quality-9830",
+   "hamming": 81
+  },
+  "2000-0003": {
+   "cubicasa": "high_quality_architectural-11567",
+   "hamming": 72
+  },
+  "2000-0004": {
+   "cubicasa": "high_quality_architectural-6645",
+   "hamming": 84
+  },
+  "2000-0005": {
+   "cubicasa": "high_quality_architectural-12232",
+   "hamming": 70
+  },
+  "2000-0006": {
+   "cubicasa": "colorful-9623",
+   "hamming": 72
+  },
+  "2000-0007": {
+   "cubicasa": "colorful-1320",
+   "hamming": 68
+  },
+  "2000-0008": {
+   "cubicasa": "high_quality_architectural-3573",
+   "hamming": 74
+  },
+  "2000-0009": {
+   "cubicasa": "high_quality_architectural-10581",
+   "hamming": 61
+  },
+  "2000-0010": {
+   "cubicasa": "high_quality-13346",
+   "hamming": 63
+  },
+  "2000-0011": {
+   "cubicasa": "high_quality-794",
+   "hamming": 85
+  },
+  "2000-0012": {
+   "cubicasa": "high_quality_architectural-10581",
+   "hamming": 65
+  },
+  "2000-0013": {
+   "cubicasa": "high_quality_architectural-11639",
+   "hamming": 80
+  },
+  "2000-0014": {
+   "cubicasa": "colorful-4596",
+   "hamming": 86
+  },
+  "2000-0015": {
+   "cubicasa": "high_quality_architectural-13733",
+   "hamming": 76
+  },
+  "3000-0001": {
+   "cubicasa": "high_quality-7768",
+   "hamming": 83
+  },
+  "3000-0002": {
+   "cubicasa": "high_quality_architectural-11508",
+   "hamming": 79
+  },
+  "3000-0003": {
+   "cubicasa": "high_quality_architectural-14440",
+   "hamming": 76
+  },
+  "3000-0004": {
+   "cubicasa": "high_quality-10037",
+   "hamming": 82
+  },
+  "3000-0005": {
+   "cubicasa": "high_quality_architectural-12708",
+   "hamming": 73
+  },
+  "3000-0006": {
+   "cubicasa": "high_quality_architectural-10572",
+   "hamming": 69
+  },
+  "3000-0007": {
+   "cubicasa": "colorful-3137",
+   "hamming": 76
+  },
+  "3000-0008": {
+   "cubicasa": "high_quality_architectural-10141",
+   "hamming": 89
+  },
+  "4000-0001": {
+   "cubicasa": "high_quality_architectural-14074",
+   "hamming": 70
+  },
+  "4000-0002": {
+   "cubicasa": "high_quality-9511",
+   "hamming": 77
+  },
+  "4000-0003": {
+   "cubicasa": "high_quality-14033",
+   "hamming": 76
+  },
+  "4000-0004": {
+   "cubicasa": "high_quality-4550",
+   "hamming": 68
+  },
+  "4000-0005": {
+   "cubicasa": "high_quality-13346",
+   "hamming": 53
+  },
+  "4000-0006": {
+   "cubicasa": "high_quality_architectural-10141",
+   "hamming": 47
+  },
+  "4000-0007": {
+   "cubicasa": "high_quality-13346",
+   "hamming": 57
+  },
+  "4000-0008": {
+   "cubicasa": "high_quality_architectural-12665",
+   "hamming": 62
+  },
+  "4000-0009": {
+   "cubicasa": "high_quality_architectural-12967",
+   "hamming": 60
+  },
+  "4000-0010": {
+   "cubicasa": "high_quality_architectural-748",
+   "hamming": 68
+  },
+  "4000-0011": {
+   "cubicasa": "high_quality_architectural-12943",
+   "hamming": 64
+  },
+  "4000-0012": {
+   "cubicasa": "high_quality_architectural-11242",
+   "hamming": 64
+  },
+  "4000-0013": {
+   "cubicasa": "high_quality_architectural-11679",
+   "hamming": 80
+  },
+  "4000-0014": {
+   "cubicasa": "high_quality_architectural-11639",
+   "hamming": 69
+  },
+  "4000-0015": {
+   "cubicasa": "high_quality_architectural-6545",
+   "hamming": 74
+  },
+  "4000-0016": {
+   "cubicasa": "high_quality_architectural-10581",
+   "hamming": 52
+  },
+  "4000-0017": {
+   "cubicasa": "high_quality_architectural-10581",
+   "hamming": 60
+  },
+  "5000_0001": {
+   "cubicasa": "high_quality_architectural-451",
+   "hamming": 7
+  },
+  "5000_0002": {
+   "cubicasa": "high_quality_architectural-499",
+   "hamming": 1
+  },
+  "5000_0003": {
+   "cubicasa": "high_quality_architectural-591",
+   "hamming": 10
+  },
+  "5000_0004": {
+   "cubicasa": "high_quality_architectural-1021",
+   "hamming": 10
+  },
+  "5000_0005": {
+   "cubicasa": "high_quality_architectural-1321",
+   "hamming": 3
+  },
+  "5000_0006": {
+   "cubicasa": "high_quality_architectural-1345",
+   "hamming": 5
+  },
+  "5000_0007": {
+   "cubicasa": "high_quality_architectural-1581",
+   "hamming": 4
+  },
+  "5000_0008": {
+   "cubicasa": "high_quality_architectural-1765",
+   "hamming": 0
+  },
+  "5000_0009": {
+   "cubicasa": "high_quality_architectural-1951",
+   "hamming": 3
+  },
+  "5000_0010": {
+   "cubicasa": "high_quality_architectural-2550",
+   "hamming": 3
+  },
+  "5000_0011": {
+   "cubicasa": "high_quality_architectural-2567",
+   "hamming": 8
+  },
+  "5000_0012": {
+   "cubicasa": "high_quality_architectural-2572",
+   "hamming": 10
+  },
+  "5000_0013": {
+   "cubicasa": "high_quality_architectural-3691",
+   "hamming": 0
+  },
+  "5000_0014": {
+   "cubicasa": "high_quality_architectural-3842",
+   "hamming": 4
+  },
+  "5000_0015": {
+   "cubicasa": "high_quality_architectural-3883",
+   "hamming": 6
+  },
+  "5000_0016": {
+   "cubicasa": "high_quality_architectural-4741",
+   "hamming": 3
+  },
+  "5000_0017": {
+   "cubicasa": "high_quality_architectural-4947",
+   "hamming": 5
+  },
+  "5000_0018": {
+   "cubicasa": "high_quality_architectural-4972",
+   "hamming": 2
+  },
+  "5000_0019": {
+   "cubicasa": "high_quality_architectural-5521",
+   "hamming": 8
+  },
+  "5000_0020": {
+   "cubicasa": "high_quality_architectural-11014",
+   "hamming": 87
+  },
+  "5000_0021": {
+   "cubicasa": "high_quality_architectural-6220",
+   "hamming": 3
+  },
+  "5000_0022": {
+   "cubicasa": "high_quality_architectural-6588",
+   "hamming": 4
+  },
+  "5000_0023": {
+   "cubicasa": "high_quality_architectural-6675",
+   "hamming": 0
+  },
+  "5000_0024": {
+   "cubicasa": "high_quality_architectural-7677",
+   "hamming": 3
+  },
+  "5000_0025": {
+   "cubicasa": "high_quality_architectural-7820",
+   "hamming": 10
+  },
+  "5000_0026": {
+   "cubicasa": "high_quality_architectural-8416",
+   "hamming": 5
+  },
+  "5000_0027": {
+   "cubicasa": "high_quality_architectural-8675",
+   "hamming": 12
+  },
+  "5000_0028": {
+   "cubicasa": "high_quality_architectural-9121",
+   "hamming": 4
+  },
+  "5000_0029": {
+   "cubicasa": "high_quality_architectural-10726",
+   "hamming": 77
+  },
+  "5000_0030": {
+   "cubicasa": "high_quality_architectural-9347",
+   "hamming": 6
+  },
+  "5000_0031": {
+   "cubicasa": "high_quality_architectural-9443",
+   "hamming": 3
+  },
+  "5000_0032": {
+   "cubicasa": "high_quality_architectural-9483",
+   "hamming": 6
+  },
+  "5000_0033": {
+   "cubicasa": "high_quality_architectural-9620",
+   "hamming": 3
+  },
+  "5000_0034": {
+   "cubicasa": "high_quality_architectural-9977",
+   "hamming": 4
+  },
+  "5000_0035": {
+   "cubicasa": "high_quality_architectural-10335",
+   "hamming": 5
+  },
+  "6000-0001": {
+   "cubicasa": "high_quality-8392",
+   "hamming": 68
+  },
+  "6000-0002": {
+   "cubicasa": "high_quality_architectural-10759",
+   "hamming": 67
+  },
+  "6000-0003": {
+   "cubicasa": "high_quality_architectural-10045",
+   "hamming": 84
+  },
+  "6000-0004": {
+   "cubicasa": "high_quality_architectural-8600",
+   "hamming": 85
+  },
+  "6000-0005": {
+   "cubicasa": "high_quality_architectural-11023",
+   "hamming": 76
+  },
+  "6000-0006": {
+   "cubicasa": "high_quality_architectural-3510",
+   "hamming": 66
+  },
+  "6000-0007": {
+   "cubicasa": "high_quality-3180",
+   "hamming": 80
+  },
+  "6000-0008": {
+   "cubicasa": "high_quality-751",
+   "hamming": 89
+  },
+  "6000-0009": {
+   "cubicasa": "high_quality-10785",
+   "hamming": 75
+  },
+  "6000-0010": {
+   "cubicasa": "high_quality_architectural-4845",
+   "hamming": 88
+  },
+  "6000-0011": {
+   "cubicasa": "high_quality_architectural-14576",
+   "hamming": 87
+  },
+  "6000-0012": {
+   "cubicasa": "colorful-14923",
+   "hamming": 85
+  },
+  "6000-0013": {
+   "cubicasa": "high_quality_architectural-10781",
+   "hamming": 78
+  },
+  "6000-0014": {
+   "cubicasa": "high_quality_architectural-8021",
+   "hamming": 81
+  },
+  "6000-0015": {
+   "cubicasa": "high_quality_architectural-10303",
+   "hamming": 78
+  },
+  "6000-0016": {
+   "cubicasa": "high_quality_architectural-13862",
+   "hamming": 78
+  },
+  "6000-0017": {
+   "cubicasa": "high_quality-5844",
+   "hamming": 76
+  },
+  "6000-0018": {
+   "cubicasa": "high_quality_architectural-11515",
+   "hamming": 74
+  },
+  "6000-0019": {
+   "cubicasa": "high_quality_architectural-8209",
+   "hamming": 71
+  },
+  "6000-0020": {
+   "cubicasa": "high_quality-5844",
+   "hamming": 68
+  },
+  "6000-0021": {
+   "cubicasa": "high_quality_architectural-13862",
+   "hamming": 70
+  },
+  "6000-0022": {
+   "cubicasa": "high_quality-9846",
+   "hamming": 74
+  },
+  "6000-0023": {
+   "cubicasa": "high_quality_architectural-10141",
+   "hamming": 80
+  },
+  "6000-0024": {
+   "cubicasa": "high_quality_architectural-989",
+   "hamming": 78
+  },
+  "6000-0025": {
+   "cubicasa": "high_quality-7729",
+   "hamming": 71
+  },
+  "6000-0026": {
+   "cubicasa": "high_quality-13346",
+   "hamming": 76
+  },
+  "6000-0027": {
+   "cubicasa": "high_quality_architectural-708",
+   "hamming": 81
+  },
+  "6000-0028": {
+   "cubicasa": "high_quality_architectural-12684",
+   "hamming": 61
+  },
+  "6000-0029": {
+   "cubicasa": "high_quality_architectural-9350",
+   "hamming": 79
+  },
+  "6000-0030": {
+   "cubicasa": "high_quality_architectural-9057",
+   "hamming": 47
+  },
+  "6000-0031": {
+   "cubicasa": "colorful-13352",
+   "hamming": 79
+  },
+  "6000-0032": {
+   "cubicasa": "colorful-3136",
+   "hamming": 75
+  },
+  "6000-0033": {
+   "cubicasa": "colorful-13181",
+   "hamming": 77
+  },
+  "6000-0034": {
+   "cubicasa": "high_quality_architectural-14955",
+   "hamming": 71
+  },
+  "6000-0035": {
+   "cubicasa": "high_quality_architectural-14477",
+   "hamming": 60
+  },
+  "6000-0036": {
+   "cubicasa": "high_quality_architectural-5048",
+   "hamming": 77
+  },
+  "6000-0037": {
+   "cubicasa": "high_quality_architectural-3240",
+   "hamming": 75
+  },
+  "6000-0038": {
+   "cubicasa": "high_quality_architectural-708",
+   "hamming": 73
+  },
+  "6000-0039": {
+   "cubicasa": "high_quality-8177",
+   "hamming": 83
+  },
+  "6000-0040": {
+   "cubicasa": "high_quality-11952",
+   "hamming": 74
+  }
+ }
+}
