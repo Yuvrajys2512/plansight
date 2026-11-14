@@ -1,0 +1,44 @@
+"""PlanSight public demo on Modal: FastAPI API + built web UI + fine-tuned ONNX detectors, CPU only.
+
+    .venv\\Scripts\\modal.exe deploy deploy/modal_app.py
+Prereqs: `python scripts/build_demo_bundle.py` (demo drawings -> deploy/bundle) and `npm run build` in web/.
+Scales to zero when idle. Before peer review set KEEP_WARM=1 (env) and redeploy so the first visitor gets no cold start.
+LLM calls are off by default (PLANSIGHT_NO_LLM=1): the demo answers with detectors, parsers and cached Nemotron
+replies only, so it costs nothing per visit and needs no API keys on Modal.
+"""
+from __future__ import annotations
+
+import os
+from pathlib import Path
+
+import modal
+
+ROOT = Path(__file__).resolve().parents[1]
+IGNORE = ["**/__pycache__/**", "**/*.pyc"]
+
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install("libxcb1", "libgl1", "libglib2.0-0", "libsm6", "libxext6", "libxrender1")
+    .pip_install("pymupdf", "ifcopenshell", "ezdxf", "opencv-python-headless", "numpy", "pillow", "fastapi",
+                 "python-dotenv", "shapely", "httpx", "onnxruntime", "rapidocr-onnxruntime", "pydantic")
+    # rapidocr depends on full opencv-python (needs X11); swap in the headless build that provides the same cv2
+    .run_commands("pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless")
+    .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PYTHONPATH": "/root"})
+    .add_local_dir(ROOT / "deploy" / "bundle" / "junction-dataset", "/root/junction-dataset")
+    .add_local_dir(ROOT / "models", "/root/models")
+    .add_local_dir(ROOT / "cache", "/root/cache", ignore=IGNORE)
+    .add_local_dir(ROOT / "web" / "dist", "/root/web/dist")
+    .add_local_dir(ROOT / "plansight", "/root/plansight", ignore=IGNORE)
+)
+
+app = modal.App("plansight", image=image)
+
+
+@app.function(cpu=2.0, memory=4096, timeout=300, min_containers=1 if os.getenv("KEEP_WARM") == "1" else 0,
+              scaledown_window=600)
+@modal.concurrent(max_inputs=16)
+@modal.asgi_app(label="plansight")
+def web():
+    from plansight.api.app import app as fastapi_app
+
+    return fastapi_app
