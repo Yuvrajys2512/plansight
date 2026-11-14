@@ -26,7 +26,7 @@ class Answer:
     value: Any
     unit: str | None
     evidence: list[Evidence] = field(default_factory=list)
-    method: str = "deterministic"  # deterministic | vlm | llm
+    method: str = "deterministic"  # deterministic | detector | vlm | llm
     cost_usd: float = 0.0
     confidence: float = 1.0
     explanation: str = ""
