@@ -63,9 +63,10 @@ def _title(raw: str) -> str:
     return Path(raw).stem.replace("_", " ").replace("-", " ").title()
 
 
-def _equal(got, expected) -> bool:
+def _equal(got, expected, *, exact: bool = False) -> bool:
     try:
-        return abs(float(got) - float(expected)) <= 0.02 * max(abs(float(expected)), 1)
+        actual, gold = float(got), float(expected)
+        return actual == gold if exact else abs(actual - gold) <= 0.02 * max(abs(gold), 1)
     except (TypeError, ValueError):
         return str(got).strip().casefold() == str(expected).strip().casefold()
 
@@ -93,7 +94,7 @@ def _records() -> dict[str, list[dict]]:
                 answer = solver.solve(raw, row["question"])
             except Exception:
                 continue
-            if answer is None or not _equal(answer.value, row.get("answer")):
+            if answer is None or not _equal(answer.value, row.get("answer"), exact=row.get("type") == "count"):
                 continue
             try:
                 local, _ = _safe_path(raw)

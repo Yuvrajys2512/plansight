@@ -42,6 +42,7 @@ def test_examples_and_ask_for_each_source():
         assert answer.status_code == 200
         assert not answer.json().get("abstained"), (source, answer.json())
         assert answer.json().get("evidence"), (source, answer.json())
+        assert answer.json()["value"] == drawing["sample_answer"]
         assert answer.json().get("solver")
         assert "latency_ms" in answer.json()
         assert "naive_cost_usd" in answer.json()
