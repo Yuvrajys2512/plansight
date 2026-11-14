@@ -402,3 +402,5 @@ button { font: inherit; color: inherit; }
 .xr-bottom .ar-chips button { background: #05080dcc; backdrop-filter: blur(6px); }
 .xr-move { margin-top: 10px; width: 100%; border: 0; background: none; color: var(--muted); font: 500 12px var(--mono); }
 .live-link { margin-left: auto; font: 700 12px var(--display); color: #071006; background: var(--lime); padding: 7px 11px; border-radius: 9px; text-decoration: none; }
+.xr-hint span { display: block; } .xr-hint.found { border-color: var(--lime); } .xr-hint.found span { color: var(--lime); font-weight: 700; }
+.xr-bottom .btn-primary.big { width: 100%; }

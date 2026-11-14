@@ -20,6 +20,8 @@ export function LiveAr({ path, initialQ, fallbackUrl }: { path: string; initialQ
   const [ans, setAns] = useState<Ans | null>(null);
   const [count, setCount] = useState<[number, number]>([0, 0]);
   const [busy, setBusy] = useState(false);
+  const [surface, setSurface] = useState(false);
+  const [scanSecs, setScanSecs] = useState(0);
   const [input, setInput] = useState('');
   const [examples, setExamples] = useState<string[]>([]);
   const source = path.split('/')[1] || '';
@@ -42,6 +44,7 @@ export function LiveAr({ path, initialQ, fallbackUrl }: { path: string; initialQ
       const e = new ArEngine(); engine.current = e;
       e.onCount = (a, b) => setCount([a, b]);
       e.onTick = i => sfx.tick(i);
+      e.onSurface = f => { setSurface(f); if (f) sfx.tick(8); };
       e.onDone = () => setTimeout(() => sfx.stamp(), 150);
       e.onPlaced = () => { sfx.whoosh(); setPhase('placed'); if (initialQ) setTimeout(() => void ask(initialQ), 3200); };
       e.onEnd = () => { setPhase('intro'); setAns(null); setQ(null); setCount([0, 0]); };
@@ -50,6 +53,7 @@ export function LiveAr({ path, initialQ, fallbackUrl }: { path: string; initialQ
       setPhase('scanning');
     } catch (x) { setErr(x instanceof Error ? x.message : 'Could not start AR'); setPhase('intro'); engine.current?.end(); }
   };
+  useEffect(() => { if (phase !== 'scanning') { setScanSecs(0); return; } const t0 = Date.now(); const t = setInterval(() => setScanSecs(Math.floor((Date.now() - t0) / 1000)), 500); return () => clearInterval(t); }, [phase]);
   // UI taps must not also count as "tap to place" in the AR session.
   const noSelect = (el: HTMLElement | null) => { el?.addEventListener('beforexrselect', ev => ev.preventDefault()); };
 
@@ -64,7 +68,7 @@ export function LiveAr({ path, initialQ, fallbackUrl }: { path: string; initialQ
       <a className="btn-ghost" href={fallbackUrl}>3D preview instead</a>
     </main> : <>
       <div className="xr-top" ref={noSelect}>
-        {phase === 'scanning' ? <div className="xr-hint"><i className="pulse" />Point at the table and move the phone slowly…<b>tap when the ring appears</b></div>
+        {phase === 'scanning' ? <div className={`xr-hint ${surface ? 'found' : ''}`}>{surface ? <><span>✓ Surface found</span><b>Tap anywhere to build here</b></> : <><span><i className="pulse" />{scanSecs < 4 ? 'Point at the table and move the phone slowly side to side…' : scanSecs < 9 ? 'Keep moving slowly. Tilt down a little so the table fills the view.' : 'Plain or shiny tables are hard to track: put a sheet of paper, a phone case or a book on it.'}</span><b>a lime ring appears when it locks on</b></>}</div>
           : <div className="xr-card">
             <div className="xr-count"><span>{q ? short(q) : 'Ask a question'}</span><b className={count[1] && count[0] >= count[1] ? 'done' : ''}>{busy ? '…' : ans && !ans.abstained ? (count[1] ? count[0] : String(ans.value)) : '—'}</b></div>
             {ans && !ans.abstained && <small>{count[1] ? `${count[1]} lit in lime on the model` : 'exact answer from the drawing'} · ${(ans.cost_usd ?? 0).toFixed(5)}</small>}
@@ -72,6 +76,7 @@ export function LiveAr({ path, initialQ, fallbackUrl }: { path: string; initialQ
           </div>}
         <button className="xr-x" onClick={() => engine.current?.end()}>✕</button>
       </div>
+      {phase === 'scanning' && scanSecs >= 5 && !surface && <div className="xr-bottom" ref={noSelect}><button className="btn-primary big" onClick={() => engine.current?.placeInFront()}>Place it in front of me</button></div>}
       {phase === 'placed' && <div className="xr-bottom" ref={noSelect}>
         <div className="ar-chips">{examples.map(e => <button key={e} className={e === q ? 'on' : ''} disabled={busy} onClick={() => void ask(e)}>{short(e)}</button>)}</div>
         <form className="ar-ask" onSubmit={e => { e.preventDefault(); if (input.trim()) { void ask(input.trim()); setInput(''); } }}><input value={input} onChange={e => setInput(e.target.value)} placeholder="Ask anything · any language" /><button className="btn-primary">Ask</button></form>

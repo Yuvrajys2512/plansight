@@ -27,12 +27,12 @@ export class ArEngine {
   renderer: THREE.WebGLRenderer; scene = new THREE.Scene(); camera = new THREE.PerspectiveCamera(70, 1, 0.01, 40);
   reticle: THREE.Mesh; anchor = new THREE.Group(); model = new THREE.Group(); hl = new THREE.Group();
   session: XRSession | null = null; hitSource: XRHitTestSource | null = null; refSpace: XRReferenceSpace | null = null;
-  placed = false; anims: Anim[] = []; data: PlanScene | IfcScene | null = null; ifcMeshes: { mesh: THREE.Mesh; cls: string; storey: string | null }[] = [];
+  placed = false; lastHit = 0; scanStart = 0; anims: Anim[] = []; data: PlanScene | IfcScene | null = null; ifcMeshes: { mesh: THREE.Mesh; cls: string; storey: string | null }[] = [];
   mats = { wall: new THREE.MeshStandardMaterial({ color: '#e6edf3', roughness: .7 }), floor: new THREE.MeshStandardMaterial({ color: '#1d2a38', roughness: .9 }),
     room: new THREE.MeshStandardMaterial({ color: '#2b3d52', roughness: .9 }), door: new THREE.MeshStandardMaterial({ color: '#6d7d8f' }),
     glass: new THREE.MeshStandardMaterial({ color: '#3de0ff', transparent: true, opacity: .45 }), lit: new THREE.MeshStandardMaterial({ color: LIME, emissive: LIME, emissiveIntensity: .9, roughness: .4 }),
     ghost: new THREE.MeshStandardMaterial({ color: '#9fc3e6', transparent: true, opacity: .16, depthWrite: false }), pending: new THREE.MeshStandardMaterial({ color: '#3a4a5c', transparent: true, opacity: .55 }) };
-  onPlaced?: () => void; onCount?: (shown: number, total: number) => void; onTick?: (i: number) => void; onDone?: () => void; onEnd?: () => void;
+  onSurface?: (found: boolean) => void; onPlaced?: () => void; onCount?: (shown: number, total: number) => void; onTick?: (i: number) => void; onDone?: () => void; onEnd?: () => void;
 
   constructor() {
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -92,14 +92,25 @@ export class ArEngine {
     this.renderer.xr.setReferenceSpaceType('local'); await this.renderer.xr.setSession(session);
     this.refSpace = this.renderer.xr.getReferenceSpace();
     const viewer = await session.requestReferenceSpace('viewer');
-    this.hitSource = (await session.requestHitTestSource!({ space: viewer })) ?? null;
+    // Feature points as well as planes: textured spots on a table hit much sooner than a fully detected plane.
+    try { this.hitSource = (await session.requestHitTestSource!({ space: viewer, entityTypes: ['plane', 'point'] } as XRHitTestOptionsInit)) ?? null; }
+    catch { this.hitSource = (await session.requestHitTestSource!({ space: viewer })) ?? null; }
+    this.scanStart = performance.now();
     session.addEventListener('select', () => { if (!this.placed && this.reticle.visible) this.place(); });
     session.addEventListener('end', () => { this.hitSource?.cancel(); this.hitSource = null; this.session = null; this.placed = false; this.renderer.setAnimationLoop(null); this.renderer.domElement.remove(); this.onEnd?.(); });
     this.renderer.setAnimationLoop((_t, frame) => this.frame(frame));
   }
 
   end() { void this.session?.end(); }
-  replace() { this.placed = false; this.anchor.visible = false; }
+  replace() { this.placed = false; this.anchor.visible = false; this.scanStart = performance.now(); this.lastHit = 0; }
+
+  /** Fallback when no surface is found: ~60 cm ahead, ~35 cm below the eye (roughly table height when standing/sitting). */
+  placeInFront() {
+    const cam = this.renderer.xr.getCamera(); const pos = new THREE.Vector3().setFromMatrixPosition(cam.matrixWorld);
+    const dir = new THREE.Vector3(0, 0, -1).applyQuaternion(new THREE.Quaternion().setFromRotationMatrix(cam.matrixWorld)); dir.y = 0; dir.normalize();
+    const at = pos.clone().add(dir.multiplyScalar(.6)); at.y -= .35;
+    this.reticle.matrix.makeTranslation(at.x, at.y, at.z); this.place();
+  }
 
   private place() {
     this.anchor.position.setFromMatrixPosition(this.reticle.matrix);
@@ -158,8 +169,12 @@ export class ArEngine {
   private frame(frame?: XRFrame) {
     if (frame && this.hitSource && this.refSpace && !this.placed) {
       const hits = frame.getHitTestResults(this.hitSource);
-      if (hits.length) { const pose = hits[0].getPose(this.refSpace); if (pose) { this.reticle.visible = true; this.reticle.matrix.fromArray(pose.transform.matrix); } }
-      else this.reticle.visible = false;
+      const pose = hits.length ? hits[0].getPose(this.refSpace) : null;
+      const now = performance.now();
+      if (pose) { this.reticle.matrix.fromArray(pose.transform.matrix); if (!this.lastHit) this.onSurface?.(true); this.lastHit = now; }
+      // Keep the ring at its last spot through brief tracking dropouts instead of blinking off.
+      const vis = now - this.lastHit < 1000 && this.lastHit > 0;
+      if (vis !== this.reticle.visible) { this.reticle.visible = vis; if (!vis) { this.lastHit = 0; this.onSurface?.(false); } }
     }
     const now = performance.now();
     for (const a of this.anims) {
