@@ -26,8 +26,13 @@ the count updates live. A human verifies the answer in seconds, and every correc
 **Results.**
 - Stoa dataset: Swiss plans 99.5% and IFC models 99.7% (all languages, $0); multilingual routing 99.8% held-out;
   CubiCasa test split: toilets 92%, sinks 86%; schedule sheets 83%.
-- AECV-Bench held-out split (never tuned on): PlanSight averages 62% vs Gemini 3.5 Flash 65%, Claude Fable 5 64%, GPT-5.5 59%,
-  at **$0.0005 per plan, 60–450× cheaper**, with every count boxed. It ties the best frontier model on doors (43%) and windows (38%).
+- AECV-Bench held-out split (never tuned on). We first audited leakage: 20 of its 120 plans are in our detector's
+  training data (CubiCasa5K), so we drop them for every system. On the clean held-out split PlanSight averages **62%** vs
+  Gemini 3.5 Flash 68%, Claude Fable 5 67%, GPT-5.5 63%, at **$0.0005 per plan, 60–450× cheaper**, with every count boxed.
+  It doesn't beat frontier yet (Gemini 3 Pro gets 47% on doors vs our 39%), and we say so.
+- Overnight we tried five ways to close that gap (rule tuning, SAHI tiling, a wall check, a detector retrained on Verda
+  with tiles + style augmentation, an ensemble). Each was tuned on one half of the benchmark and judged on the other.
+  None held up, so none shipped. The full log is in the repo.
 
 **Tech:** Python, FastAPI, PyMuPDF, ifcopenshell, Ultralytics YOLO11 → ONNX, RapidOCR, vLLM, React. Deployed on Modal. Aiven PostgreSQL stores the answer cache, the per-question cost log and reviewer corrections (live
 counter in the demo). Cloudinary hosts the sheets and renders zoomed evidence crops plus a shareable "evidence sheet" image
@@ -54,15 +59,43 @@ drawings from many architects needs.
    perception problem, so we moved symbols to fine-tuned detectors.
 3. Detector proposes boxes and Nemotron classifies each crop: helped the tuning split (doors 33→40%) but hurt the held-out
    split (43→33%). We dropped it instead of shipping an overfit result.
-4. Final role, Nemotron reading labels as one of three voters: **bedrooms 77% → 85% on the held-out AECV split**.
+4. Final role, Nemotron reading labels as one of three voters. On the held-out AECV split: **bedrooms 77% → 85%,
+   toilets 45% → 80%** (with only two readers the median has no tie-breaker; Nemotron is that third vote). On the
+   leakage-clean held-out split: bedrooms 80% → 88%, toilets 47% → 80%.
    We also added Nemotron 3.5 Super VL to the AECV-Bench comparison (it isn't on the published leaderboard): 39% alone
    vs 62% inside PlanSight.
 
+**Where to see it in the demo:** open the "Frontier vs PlanSight" benchmark view and pick a plan. The trace shows
+Nemotron's count next to the other voters, which one was used, and Nemotron's cost and latency. These are the real
+recorded Nemotron reads from our self-hosted run. Live Nemotron calls are off on the public demo (`PLANSIGHT_NO_LLM=1`)
+so it stays free and up while the GPU is powered down; set a Nemotron backend key to turn them on.
+
 ## Verda (post the docs/VERDA.md link in Verda's Discord)
-Self-hosted Nemotron 3.5 Super VL and trained two YOLO11 floor-plan detectors on one RTX PRO 6000. Training ran next to
-the live inference server, so we could train, evaluate against Nemotron and iterate within the hour. Thousands of eval
-calls, no rate limits, ~€30 of credit. Full write-up: `docs/VERDA.md`.
+PlanSight (Junction 2026, Stoa "Make Blueprints Talk") on Verda: one RTX PRO 6000 self-hosted NVIDIA Nemotron 3.5 Super VL
+(NVFP4, vLLM) and trained two YOLO11 floor-plan detectors right next to it, so we could train, evaluate against Nemotron
+and iterate within the hour. Thousands of eval calls with no rate limits. The detectors ship as CPU ONNX, so the public
+demo answers for ~$0.00003 per question. Overnight we ran a second training (tiles + style augmentation, 10 s dataset
+build on 28 cores, auto-export and auto-shutdown watcher). It didn't beat v1 on the held-out test, so it was documented
+and not shipped. ~€58 of credit in total. Write-up: https://github.com/Yuvrajys2512/plansight/blob/main/docs/VERDA.md
 
 ## Codex
 Codex built the eval harness, the CubiCasa OCR solver, the demo API, the web UI and the Frontier vs PlanSight view in a
 parallel git-worktree lane (`codex/p*` branches, merged per phase). Log: `CODEX_LOG.md`. Screenshots: `docs/codex/`.
+
+## ElevenLabs
+"Talk to the drawing" voice mode: an ElevenLabs conversational agent whose tools call the same `/api/ask` pipeline, so
+a spoken question ("how many doors on this plan?") gets the same evidence boxes on the sheet. Built for a site engineer
+with dirty hands. The browser gets a short-lived WebRTC token from our server; the API key never reaches the client.
+
+## Tech challenges: tick / untick (checked against the code and the live site, Sun 01:45)
+| Tech | Keep? | Evidence |
+|---|---|---|
+| Nemotron | ✅ | 3rd voter for rooms; held-out toilets 45→80%, bedrooms 77→85% |
+| Verda | ✅ | self-hosted Nemotron, two detector trainings, `docs/VERDA.md` |
+| Gemma | ✅ | router fallback for unseen phrasings/languages (`plansight/router/gemma.py`) |
+| Codex | ✅ | `CODEX_LOG.md`, `docs/codex/` |
+| Aiven | ✅ | answer cache + question/cost log + corrections; live `/api/stats` (207 questions logged) |
+| Cloudinary | ✅ | evidence crops + shareable evidence sheet via URL transforms. **Fill cld.media/hackathon-survey** |
+| Modal | ✅ | hosts the public demo |
+| ElevenLabs | ✅ | voice mode live (`/api/voice/token` returns 200) |
+| Gemini API | ❌ **untick** | only used as the transport to reach Gemma and as the LLM inside the voice agent; not a distinct job |

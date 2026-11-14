@@ -137,7 +137,7 @@ copy .env.example .env                     # keys are optional; PLANSIGHT_NO_LLM
 cd web; npm install; npm run build; cd ..
 $env:PLANSIGHT_NO_LLM="1"; .venv\Scripts\python.exe -m uvicorn plansight.api.app:app --port 8765
 # open http://127.0.0.1:8765
-.venv\Scripts\python.exe -m pytest -q      # 64 tests
+.venv\Scripts\python.exe -m pytest -q      # 66 tests
 ```
 
 Not in the repo: the Stoa dataset (10 GB, from the challenge page) and the detector weights `models/*.onnx`
