@@ -40,7 +40,7 @@ app = modal.App("plansight", image=image)
 from dotenv import dotenv_values  # noqa: E402
 
 _env = {**dotenv_values(ROOT / ".env"), **os.environ}
-addon_keys = modal.Secret.from_dict({k: _env[k] for k in ("DATABASE_URL", "CLOUDINARY_URL") if _env.get(k)})
+addon_keys = modal.Secret.from_dict({k: _env[k] for k in ("DATABASE_URL", "CLOUDINARY_URL", "ELEVENLABS_API_KEY", "ELEVENLABS_AGENT_ID") if _env.get(k)})
 # runs/ (feedback.jsonl from the click-to-reject UI) survives container restarts:
 #   python -m modal volume get plansight-runs feedback.jsonl .
 runs = modal.Volume.from_name("plansight-runs", create_if_missing=True)
