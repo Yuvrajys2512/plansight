@@ -15,6 +15,10 @@ from plansight.config import DATA_ROOT, QUESTIONS, REPO, resolve, source_of
 from plansight.eval.data import detect_language
 from plansight.api.cost import naive_cost_usd
 from plansight.solvers import route
+from plansight.store import cached_answer, save_answer
+from plansight.store.postgres import search_drawings
+from plansight.media import upload_drawing, evidence_crop_url, highlight_url
+from plansight.config import RUNS
 
 app = FastAPI(title="PlanSight API")
 ALLOWED_SOURCES = ("swiss_dwellings", "ifc_models", "cubicasa5k")
@@ -105,6 +109,14 @@ def _records() -> dict[str, list[dict]]:
             if local.suffix.lower() != ".ifc" and not answer.evidence:
                 continue
             thumb = f"/api/render?path={raw}&page=0"
+            cloud_id = None
+            try:
+                cloud_id = upload_drawing(local, f"plansight/demo/{src}/{local.stem}")
+            except Exception:
+                pass
+            if cloud_id:
+                from plansight.media.cloudinary import transformed_url
+                thumb = transformed_url(cloud_id, "c_limit,w_500,f_auto,q_auto") or thumb
             model_path = raw.split("_plan-")[0] + ".ifc" if src == "ifc_models" and "_plan-" in raw else None
             grouped[src].append({"path": raw, "source": src, "title": _title(raw), "thumbnail_url": thumb,
                                  "sample_question": row["question"], "sample_answer": row.get("answer"),
@@ -178,8 +190,13 @@ class AskRequest(BaseModel):
 @app.post("/ask")
 @app.post("/api/ask")
 def ask(request: AskRequest):
-    _, rel = _safe_path(request.path)
+    local, rel = _safe_path(request.path)
     start = time.perf_counter()
+    cached = cached_answer(rel, request.question)
+    if cached is not None:
+        cached.update({"cached": True, "cost_usd": 0.0, "latency_ms": 0.0,
+                       "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
+        return cached
     try:
         solver = route(rel)
         if solver is None:
@@ -200,6 +217,18 @@ def ask(request: AskRequest):
     result = answer.to_dict()
     result.update({"solver": solver.name, "latency_ms": latency,
                    "naive_cost_usd": naive_cost_usd(question=request.question), "abstained": False})
+    result["cached"] = False
+    try:
+        cloud_id = upload_drawing(local, f"plansight/demo/{source_of(rel)}/{local.stem}")
+        if cloud_id and result.get("evidence"):
+            from plansight.media import evidence_crop_url, highlight_url
+            width, height = _image_size(local, 0)
+            for ev in result["evidence"]:
+                box = tuple(round(float(v)) for v in ev["bbox"])
+                ev["crop_url"] = evidence_crop_url(cloud_id, box, width=width, height=height)
+                ev["highlight_url"] = highlight_url(cloud_id, box, width=width, height=height)
+    except Exception:
+        pass
     if rel.endswith(".ifc") and not answer.evidence and solver.name == "ifc":
         import re
         from plansight.solvers.ifc import facts, model_of
@@ -209,7 +238,48 @@ def ask(request: AskRequest):
         result["model_fact"] = {"element": kind, "guid": element.get("guid") if element else None,
                                 "property": "model element count", "value": answer.value,
                                 "element_name": element.get("name") if element else None}
+    save_answer(rel, request.question, result)
     return result
+
+
+@app.get("/api/aecv/plans")
+def aecv_plans():
+    path = REPO / "web" / "public" / "aecv" / "plans.json"
+    if not path.is_file():
+        raise HTTPException(404, "AECV demo data is not installed")
+    return JSONResponse(json.loads(path.read_text(encoding="utf-8")))
+
+
+class SheetSearchRequest(BaseModel):
+    embedding: list[float]
+    limit: int = 5
+
+
+@app.post("/api/sheets/search")
+def sheet_search(request: SheetSearchRequest):
+    try:
+        return search_drawings(request.embedding, request.limit)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc))
+    except Exception:
+        return []
+
+
+class FeedbackRequest(BaseModel):
+    plan: str
+    kind: str
+    bbox: list[float]
+    action: str
+
+
+@app.post("/api/feedback")
+def feedback(request: FeedbackRequest):
+    if request.kind not in {"Door", "Window", "Toilet", "Bedroom"} or request.action not in {"reject", "add"} or len(request.bbox) != 4:
+        raise HTTPException(400, "Invalid feedback")
+    RUNS.mkdir(parents=True, exist_ok=True)
+    with (RUNS / "feedback.jsonl").open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(request.model_dump(), separators=(",", ":")) + "\n")
+    return {"saved": True}
 
 
 _DIST = REPO / "web" / "dist"
