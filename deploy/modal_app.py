@@ -23,7 +23,7 @@ image = (
     .apt_install("libxcb1", "libgl1", "libglib2.0-0", "libsm6", "libxext6", "libxrender1")
     .pip_install("pymupdf", "ifcopenshell", "ezdxf", "opencv-python-headless", "numpy", "pillow", "fastapi",
                  "python-dotenv", "shapely", "httpx", "onnxruntime", "rapidocr-onnxruntime", "pydantic",
-                 "psycopg[binary]", "cloudinary", "trimesh")
+                 "psycopg[binary]", "cloudinary", "trimesh", "mapbox-earcut")
     # rapidocr depends on full opencv-python (needs X11); swap in the headless build that provides the same cv2
     .run_commands("pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless")
     .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PYTHONPATH": "/root"})

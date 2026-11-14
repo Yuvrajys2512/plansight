@@ -4,6 +4,7 @@ import Voice from './Voice';
 import Scene3D, { type FlyRequest, type Highlight, type RoomInfo } from './Scene3D';
 import { sfx } from './sfx';
 import { PhoneSnap, SnapModal, type SnapInfo } from './Snap';
+import { ArQr, ArView } from './ArView';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
@@ -81,6 +82,8 @@ function Intro({ onEnter, onBench, onSnap, stats }: { onEnter: () => void; onBen
 function App() {
   const phoneSession = new URLSearchParams(location.search).get('snap');
   if (phoneSession) return <PhoneSnap session={phoneSession} />;
+  const arPath = new URLSearchParams(location.search).get('ar');
+  if (arPath) return <ArView path={arPath} initialQ={new URLSearchParams(location.search).get('q')} />;
   return <MainApp />;
 }
 
@@ -105,6 +108,7 @@ function MainApp() {
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
   const [mode3d, setMode3d] = useState(false);
   const [snapOpen, setSnapOpen] = useState(false);
+  const [arOpen, setArOpen] = useState(false);
   const [pendingAsk, setPendingAsk] = useState<{ path: string; q: string } | null>(null);
   const [autoLift, setAutoLift] = useState(false);
   const [fly, setFly] = useState<FlyRequest>(null);
@@ -305,7 +309,7 @@ function MainApp() {
       <section className="panel stage-panel main-stage">
         <div className="stage-head">
           <div><span className="kicker">{selected?.is_model ? 'IFC model · BIM facts' : 'Sheet viewer'}</span><h3>{selected?.title || 'Loading drawings…'}</h3></div>
-          <div className="zoom">{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => { if (!mode3d) sfx.whoosh(); setMode3d(true); }}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
+          <div className="zoom">{can3d && <button className="ar-launch" onClick={() => setArOpen(true)}>📱 AR on your table</button>}{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => { if (!mode3d) sfx.whoosh(); setMode3d(true); }}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
         </div>
         <div className={`canvas ${busy ? "busy" : ""} ${evidence.length ? "has-ev" : ""}`} ref={canvasRef} onPointerDown={e => { if (zoom > 1 && (e.target as Element).tagName !== 'rect') { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
           {!mode3d && (liveCount !== null || (answer && !answer.abstained && Number.isFinite(numeric) && !isCount)) && <div className="stage-counter"><span>{answer?.unit && answer.unit !== 'count' ? answer.unit : 'count'}</span><b className={revealDone ? 'done' : ''}>{liveCount !== null ? liveCount : Number.isInteger(numeric) ? Math.round(rolled) : rolled.toFixed(2)}</b></div>}
@@ -347,6 +351,7 @@ function MainApp() {
     </div>
     <Voice ask={ask} openDrawing={openDrawing} flyTo={flyTo} context={voiceContext} />
     {snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}
+    {arOpen && selected && <ArQr path={selected.path} q={answer && !answer.abstained ? question : null} onClose={() => setArOpen(false)} />}
   </main>;
 }
 

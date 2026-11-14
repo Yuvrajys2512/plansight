@@ -370,6 +370,26 @@ def snap_latest(session: str):
     return latest(session) or {}
 
 
+@app.get("/api/ar/model.glb")
+def ar_model_glb(path: str, question: str | None = None):
+    """Tabletop AR model of a drawing; if a question is given, its evidence is baked in as lime."""
+    from plansight.api.ar import ar_model
+    local, rel = _safe_path(path)
+    ifc_model = None
+    if source_of(rel) == "ifc_models" and local.suffix.lower() != ".ifc":
+        from plansight.solvers.ifc import ifc_path, model_of
+        ifc_model = ifc_path(model_of(rel))
+    try:
+        scene = build_scene(rel, local, ifc_model=ifc_model)
+    except Exception as exc:
+        raise HTTPException(422, f"No 3D source for this drawing ({type(exc).__name__})")
+    answer = ask(AskRequest(path=path, question=question)) if question else None
+    if isinstance(answer, JSONResponse):
+        answer = None
+    out = ar_model(rel, local, scene, answer, cache_paths(rel)[1] if scene.get("kind") == "ifc" else None)
+    return FileResponse(out, media_type="model/gltf-binary", headers={"Cache-Control": "public, max-age=3600"})
+
+
 @app.get("/api/voice/token")
 def voice_token():
     """Short-lived WebRTC token for the ElevenLabs voice agent; the API key never reaches the browser."""

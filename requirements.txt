@@ -16,3 +16,4 @@ httpx
 rapidocr-onnxruntime
 cloudinary
 trimesh
+mapbox-earcut

@@ -363,3 +363,23 @@ button { font: inherit; color: inherit; }
 .phone-err { color: var(--amber); margin-top: 12px; }
 .phone-done { text-align: center; margin-top: 12vh; }
 .big-check { width: 96px; height: 96px; border-radius: 50%; display: grid; place-items: center; margin: 0 auto 18px; background: var(--lime); color: #071006; font-size: 48px; font-weight: 800; box-shadow: 0 0 60px -6px var(--lime); animation: stamp .5s cubic-bezier(.2, 1.6, .4, 1); }
+
+/* ---------- AR ---------- */
+.ar-launch { border: 1px solid #3de0ff77; background: #3de0ff14; color: var(--cyan); border-radius: 8px; height: 28px; padding: 0 10px; font: 700 11.5px var(--display); cursor: pointer; margin-right: 6px; }
+.ar-launch:hover { background: #3de0ff2a; }
+.ar-explain p { color: var(--muted); font-size: 14px; line-height: 1.55; margin: 0 0 12px; } .ar-explain b { color: var(--text); } .ar-explain .dim { font: 500 11px var(--mono); color: var(--dim); }
+.phone.ar { padding-bottom: 20px; }
+.phone-brand em { font-style: normal; font: 700 10px var(--mono); color: #04121a; background: var(--cyan); padding: 2px 6px; border-radius: 5px; letter-spacing: .1em; }
+.ar-stage { position: relative; height: 54vh; min-height: 300px; border-radius: 18px; border: 1px solid var(--line2); background: radial-gradient(ellipse at center, #13233a, #060a10 75%); overflow: hidden; margin-bottom: 14px; }
+.ar-btn { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); white-space: nowrap; padding: 13px 20px; font-size: 15px; box-shadow: 0 10px 30px -6px #c8ff3d88; }
+.ar-loading { position: absolute; top: 12px; left: 12px; display: flex; gap: 8px; align-items: center; font: 500 11px var(--mono); color: var(--lime); background: #05080dcc; padding: 6px 10px; border-radius: 8px; }
+.ar-answer { display: flex; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; border: 1px solid #c8ff3d55; background: var(--lime-dim); margin-bottom: 12px; animation: rise .3s both; }
+.ar-answer b { font: 700 44px/1 var(--display); color: var(--lime); }
+.ar-answer span { font-size: 13px; color: var(--text); } .ar-answer small { display: block; margin-top: 4px; font: 500 11px var(--mono); color: var(--muted); }
+.ar-answer.warn { border-color: #ffb54755; background: #ffb5470f; }
+.ar-tip { font-size: 13px !important; } .ar-tip b { color: var(--text); }
+.ar-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.ar-chips button { border: 1px solid var(--line2); background: #ffffff06; color: var(--text); border-radius: 99px; padding: 8px 12px; font-size: 12.5px; cursor: pointer; }
+.ar-chips button.on { background: var(--lime); color: #071006; border-color: var(--lime); }
+.ar-ask { display: flex; gap: 8px; } .ar-ask input { flex: 1; min-width: 0; border: 1px solid var(--line2); background: #05080d; color: var(--text); border-radius: 10px; padding: 11px 12px; font-size: 14px; }
+.phone-done .btn-primary.big { margin: 10px 0; text-decoration: none; }
