@@ -10,7 +10,7 @@ because the heavy lifting happened once, on a Verda GPU, during the hackathon. T
 |---|---|
 | Instance | `plansight-nemotron`, 1× **NVIDIA RTX PRO 6000 (96 GB)**, Verda FIN-03, on-demand ($2.81/h) |
 | Software | vLLM v0.31.0 in Docker, Ultralytics YOLO11, ONNX export |
-| Credit | €200 hackathon credit; **~€30 used** (~10 GPU-hours, Fri night → Sat afternoon), ~€170 left |
+| Credit | €200 hackathon credit; **~€58 used** (Fri night → Sun 01:10), €141.60 left |
 | Control | `scripts/verda.py status|start|shutdown` (Verda REST API). The instance is shut down whenever it's idle |
 
 ## What ran on it
@@ -42,6 +42,18 @@ a GPU, serve forever on a CPU for ~$0.00003 per question.
   chain-of-thought, 2× upscale, tiling. All logged with accuracy and $ per question.
 - **AECV-Bench** (arXiv 2601.04819): Nemotron 3.5 Super VL on all 120 plans (not on their published leaderboard, so we added
   it), plus per-crop reclassification experiments on the tuning split A, checked on held-out split B.
+
+### 4. Overnight retrain attempt (Sun 00:10–01:10): a documented negative result
+- Goal: fix the detector's weak spots on the held-out AECV benchmark (small symbols on big sheets, unseen drawing styles).
+- Built on the box in 10 s with 28 processes (`scripts/build_tiles_v2.py`): 4.2k full plans + 4.1k native-resolution
+  tiles (slicing-aided fine-tuning, arXiv 2202.06934) + 1.8k style-augmented copies (grayscale, line thinning and
+  thickening, blur, JPEG 30–90, gamma, noise, hatching). vLLM was stopped so the whole GPU trained.
+- Fine-tuned v1 (YOLO11m @1280, AdamW 2e-4, cosine, batch 16, ~2 min/epoch, early stop at epoch 19). A watcher script
+  exported ONNX, ran the test-split eval and powered the instance off when done.
+- Result: CubiCasa test doors 69 → 68, **windows 49 → 42**, and worse door counts on AECV tuning split A. **Rejected**;
+  the shipped detector is unchanged. Cost: **€3.46**. Full log: `runs/model-improvement.md`.
+- Lesson: augmentation alone doesn't bridge the style gap. The next run needs labelled plans in the new styles, which
+  is what the demo's reviewer-correction log collects.
 
 ## Why this needed Verda and not a laptop
 - A 120B multimodal model doesn't run on a laptop. Self-hosting it made thousands of eval calls possible in one night,

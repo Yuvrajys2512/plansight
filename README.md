@@ -97,7 +97,7 @@ plans in those styles. The reviewer-correction log in the demo (`feedback.jsonl`
 | Nemotron whole-plan counting, v0 | 45.4% on CubiCasa dev set (door 7.5, window 5) | baseline |
 | + chain-of-thought / 2× upscale / tiling | 31.7% / 45.0% / 29.2% | all worse → symbols go to a fine-tuned detector |
 | Detector proposes, Nemotron classifies each crop | split A door 33→40, but **held-out B door 43→33** | overfit → dropped |
-| Nemotron reads room labels on the whole plan, as 1 of 3 voters | **bedrooms 77→85% on held-out B** | **kept** |
+| Nemotron reads room labels on the whole plan, as 1 of 3 voters | held-out B: **bedrooms 77→85%, toilets 45→80%** (clean B: 80→88%, 47→80%) | **kept** |
 
 Nemotron does what it's good at (reading a whole plan) and stays out of what it's bad at (counting small symbols).
 The demo shows each voter's count, which one was used and why, plus Nemotron's own cost and latency.
@@ -121,6 +121,10 @@ The demo shows each voter's count, which one was used and why, plus Nemotron's o
   Cloudinary URL transformations produce **zoomed crops of each evidence region** (shown under the answer) and one
   **shareable evidence sheet** with every region outlined, a single link a site engineer can send to a colleague. No
   server-side image work (`plansight/media/cloudinary.py`). The UI was scaffolded with `create-cloudinary-react`.
+- **ElevenLabs**: "Talk to the drawing" voice mode for a site engineer with dirty hands. An ElevenLabs conversational
+  agent whose tools call the same `/api/ask` pipeline, so a spoken question gets the same evidence boxes on the sheet.
+  The browser gets a short-lived WebRTC token from `/api/voice/token`; the API key never leaves the server
+  (`web/src/Voice.tsx`, `scripts/create_voice_agent.py`).
 - **Modal**: hosts the public demo (FastAPI + React UI + ONNX detectors, CPU, scales to zero) and stores reviewer
   corrections on a Modal volume.
 
