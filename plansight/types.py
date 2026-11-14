@@ -32,4 +32,15 @@ class Answer:
     explanation: str = ""
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        return _plain(asdict(self))
+
+
+def _plain(x):
+    """Convert numpy scalars (from the ONNX detectors) to plain Python so the dict is JSON-safe."""
+    if isinstance(x, dict):
+        return {k: _plain(v) for k, v in x.items()}
+    if isinstance(x, (list, tuple)):
+        return [_plain(v) for v in x]
+    if hasattr(x, "item") and type(x).__module__ == "numpy":
+        return x.item()
+    return x
