@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import QRCode from 'qrcode';
-import { arUrl } from './ArView';
+import { xrUrl } from './ArView';
 
 export type SnapInfo = { path: string; width: number; height: number; warped: boolean; t: number };
 
@@ -63,7 +63,7 @@ export function PhoneSnap({ session }: { session: string }) {
   const send = async () => { if (!file) return; setState('sending'); try { const info = await uploadImage(file, session); setSentPath(info.path); setState('sent'); } catch (e) { setErr(e instanceof Error ? e.message : 'Upload failed'); setState('error'); } };
   return <main className="phone">
     <div className="phone-brand"><span className="brandmark">◎</span><b>PlanSight</b></div>
-    {state === 'sent' ? <div className="phone-done"><div className="big-check">✓</div><h1>Sent!</h1><p>Look at the big screen 👀<br />Your plan is being read and lifted into 3D.</p>{sentPath && <a className="btn-primary big" href={arUrl(sentPath, 'How many doors are shown on this floor plan?')}>🪄 Now put it on the table (AR)</a>}<button className="btn-ghost" onClick={() => { setState('ready'); setFile(null); setPreview(''); }}>Snap another</button></div> : <>
+    {state === 'sent' ? <div className="phone-done"><div className="big-check">✓</div><h1>Sent!</h1><p>Look at the big screen 👀<br />Your plan is being read and lifted into 3D.</p>{sentPath && <a className="btn-primary big" href={xrUrl(sentPath, 'How many doors are shown on this floor plan?')}>🪄 Now put it on the table (AR)</a>}<button className="btn-ghost" onClick={() => { setState('ready'); setFile(null); setPreview(''); }}>Snap another</button></div> : <>
       <h1>Photograph a floor plan</h1>
       <p>Hold the phone flat above the sheet. Edges of the paper visible is perfect: we straighten it automatically.</p>
       {preview && <img className="phone-preview" src={preview} alt="Your photo" />}

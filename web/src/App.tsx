@@ -4,7 +4,8 @@ import Voice from './Voice';
 import Scene3D, { type FlyRequest, type Highlight, type RoomInfo } from './Scene3D';
 import { sfx } from './sfx';
 import { PhoneSnap, SnapModal, type SnapInfo } from './Snap';
-import { ArQr, ArView } from './ArView';
+import { ArQr, ArView, arUrl } from './ArView';
+import { LiveAr } from './LiveAr';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
@@ -82,6 +83,8 @@ function Intro({ onEnter, onBench, onSnap, stats }: { onEnter: () => void; onBen
 function App() {
   const phoneSession = new URLSearchParams(location.search).get('snap');
   if (phoneSession) return <PhoneSnap session={phoneSession} />;
+  const xrPath = new URLSearchParams(location.search).get('xr');
+  if (xrPath) { const q = new URLSearchParams(location.search).get('q'); return <LiveAr path={xrPath} initialQ={q} fallbackUrl={arUrl(xrPath, q)} />; }
   const arPath = new URLSearchParams(location.search).get('ar');
   if (arPath) return <ArView path={arPath} initialQ={new URLSearchParams(location.search).get('q')} />;
   return <MainApp />;

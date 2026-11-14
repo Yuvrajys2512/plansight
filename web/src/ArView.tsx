@@ -26,6 +26,7 @@ const DEFAULT_QS: Record<string, string[]> = {
 };
 
 export const arUrl = (path: string, q?: string | null) => `${location.origin}/?ar=${encodeURIComponent(path)}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
+export const xrUrl = (path: string, q?: string | null) => `${location.origin}/?xr=${encodeURIComponent(path)}${q ? `&q=${encodeURIComponent(q)}` : ''}`;
 
 /** Phone page: the drawing as a tabletop hologram; asking a question bakes its evidence into the model in lime. */
 export function ArView({ path, initialQ }: { path: string; initialQ?: string | null }) {
@@ -48,7 +49,7 @@ export function ArView({ path, initialQ }: { path: string; initialQ?: string | n
   useEffect(() => { const el = mv.current; if (!el) return; const done = () => setLoading(false); el.addEventListener('load', done); el.addEventListener('error', done); const t = setTimeout(done, 15000); return () => { el.removeEventListener('load', done); el.removeEventListener('error', done); clearTimeout(t); }; }, [src, ready]);
   const n = ans?.evidence?.length ?? 0;
   return <main className="phone ar">
-    <div className="phone-brand"><span className="brandmark">◎</span><b>PlanSight</b><em>AR</em></div>
+    <div className="phone-brand"><span className="brandmark">◎</span><b>PlanSight</b><em>AR</em><a className="live-link" href={xrUrl(path, q)}>📷 Live camera AR</a></div>
     <div className="ar-stage">
       {ready ? <model-viewer ref={mv} key={src} src={src} ar="" ar-modes="webxr scene-viewer quick-look" ar-placement="floor" ar-scale="fixed" camera-controls="" auto-rotate="" auto-rotate-delay="0" rotation-per-second="18deg" shadow-intensity="1.2" shadow-softness=".8" exposure="1.05" environment-image="neutral" camera-orbit="35deg 58deg 105%" interaction-prompt="none" style={{ width: '100%', height: '100%', background: 'transparent' }}>
         <button slot="ar-button" className="btn-primary ar-btn">🪄 Place it on your table</button>
@@ -67,13 +68,13 @@ export function ArView({ path, initialQ }: { path: string; initialQ?: string | n
 /** Laptop: QR that opens the current drawing + question as AR on the visitor's phone. */
 export function ArQr({ path, q, onClose }: { path: string; q?: string | null; onClose: () => void }) {
   const [qr, setQr] = useState('');
-  const url = arUrl(path, q);
+  const url = xrUrl(path, q);
   useEffect(() => { QRCode.toDataURL(url, { margin: 1, width: 360 }).then(setQr).catch(() => {}); }, [url]);
   return <div className="snap-backdrop" onClick={onClose}><div className="snap-modal ar-modal" onClick={e => e.stopPropagation()}>
     <button className="x" onClick={onClose}>✕</button>
     <span className="kicker">Augmented reality</span>
     <h2>Put this building<br />on your table.</h2>
-    <div className="snap-cols"><div className="qr">{qr && <img src={qr} alt="QR code for AR view" />}<p><b>Scan with your phone</b>, tap <b>Place it on your table</b>, and walk around it.</p></div>
-      <div className="ar-explain"><p>The hologram is generated for this exact answer: {q ? <b>“{q.replace(/ Count doorways.*$/, '')}”</b> : 'the drawing'} — every counted item is lime, so you can check the evidence from any angle.</p><p>Ask another question on the phone and the hologram re-lights.</p><p className="dim">Android: live WebXR in the browser · iPhone: Apple Quick Look</p></div></div>
+    <div className="snap-cols"><div className="qr">{qr && <img src={qr} alt="QR code for AR view" />}<p><b>Scan with your phone</b>, point the camera at the table, tap, and watch the building construct itself.</p></div>
+      <div className="ar-explain"><p>The hologram is generated for this exact answer: {q ? <b>“{q.replace(/ Count doorways.*$/, '')}”</b> : 'the drawing'} — every counted item is lime, so you can check the evidence from any angle.</p><p>Ask another question on the phone and the hologram re-lights.</p><p className="dim">Android: live camera AR (WebXR) · the building constructs itself on the table · iPhone: Apple Quick Look fallback</p></div></div>
   </div></div>;
 }
