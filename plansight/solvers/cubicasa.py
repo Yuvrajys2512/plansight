@@ -34,9 +34,14 @@ UNITS = {"window": "windows", "door": "doors", "toilet": "toilets", "sink": "sin
          "sauna": "saunas", "balcony": "balconies", "floor": "floors"}
 
 
+def objects_model() -> str:
+    """Object detector to use: env PLANSIGHT_OBJECTS_MODEL (e.g. cubicasa_objects_v2), else the default."""
+    return os.getenv("PLANSIGHT_OBJECTS_MODEL", "cubicasa_objects")
+
+
 def detector_for(kind: str):
     if kind in OBJECT_KINDS:
-        return "cubicasa_objects", OBJECT_KINDS[kind]
+        return objects_model(), OBJECT_KINDS[kind]
     if kind in ROOM_KINDS or kind == "floor":
         return "cubicasa_rooms", (kind,)
     return None, ()
