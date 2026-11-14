@@ -12,7 +12,6 @@ from __future__ import annotations
 
 import json
 import re
-import threading
 from dataclasses import dataclass
 
 from plansight.sheets.tables import Table, extract
@@ -101,34 +100,51 @@ def _other_text(path: str, tables) -> list[str]:
     return lines
 
 
-SAFE = {k: __builtins__[k] if isinstance(__builtins__, dict) else getattr(__builtins__, k)
-        for k in ("len", "sum", "int", "float", "str", "sorted", "set", "list", "dict", "tuple", "min", "max", "any",
-                  "all", "enumerate", "range", "round", "zip", "abs", "isinstance", "bool", "print", "map", "filter",
-                  "reversed", "ValueError", "Exception", "KeyError", "IndexError", "TypeError")}
-
-
-def _safe_import(name, *args, **kwargs):
+# Runs in a separate `python -I` process (killable on timeout; a runaway thread would keep the GIL in our process).
+_RUNNER = r'''
+import json, math, re, sys
+B = __builtins__ if isinstance(__builtins__, dict) else vars(__builtins__)
+SAFE = {k: B[k] for k in ("len", "sum", "int", "float", "str", "sorted", "set", "list", "dict", "tuple", "min", "max",
+        "any", "all", "enumerate", "range", "round", "zip", "abs", "isinstance", "bool", "print", "map", "filter",
+        "reversed", "ValueError", "Exception", "KeyError", "IndexError", "TypeError", "AttributeError")}
+def imp(name, *a, **k):
     if name in ("re", "math"):
         return __import__(name)
-    raise ImportError(f"import of {name!r} is not allowed")
+    raise ImportError("import of %r is not allowed" % name)
+job = json.loads(sys.stdin.read())
+ns = {"__builtins__": {**SAFE, "__import__": imp}, "re": re, "math": math}
+try:
+    exec(job["code"], ns)
+    r = ns["answer"](job["T"], job["TEXT"])
+    out = {"ok": json.loads(json.dumps(r, default=str))}
+except BaseException as e:
+    out = {"err": "%s: %s" % (type(e).__name__, e)}
+sys.stdout.write(json.dumps(out))
+'''
 
 
-def run_code(code: str, T: dict, TEXT: list[str], timeout: float = 5.0) -> dict:
-    """Execute the model's `answer` in a namespace without IO or other imports (only re, math); bounded time."""
+def run_code(code: str, T: dict, TEXT: list[str], timeout: float = 10.0) -> dict:
+    """Execute the model's `answer` in a child process without IO builtins or other imports (only re, math)."""
+    import subprocess
+    import sys
+
     bad = re.search(r"\b(open|exec|eval|globals|locals|compile|getattr|setattr|delattr|vars|input)\s*\(|__\w+__", code)
     if bad:
         raise ValueError(f"disallowed construct in generated code: {bad.group(0)}")
-    ns: dict = {"__builtins__": {**SAFE, "__import__": _safe_import}, "re": re, "math": __import__("math")}
-    exec(code, ns)  # noqa: S102 - restricted namespace, no IO builtins
-    out: dict = {}
-
-    def target():
-        out["r"] = ns["answer"](T, TEXT)
-
-    th = threading.Thread(target=target, daemon=True); th.start(); th.join(timeout)
-    if "r" not in out:
-        raise TimeoutError("generated code timed out")
-    return out["r"]
+    try:
+        p = subprocess.run([sys.executable, "-I", "-c", _RUNNER], input=json.dumps({"code": code, "T": T, "TEXT": TEXT}),
+                           capture_output=True, text=True, encoding="utf-8", timeout=timeout)
+    except subprocess.TimeoutExpired:
+        raise TimeoutError("generated code timed out") from None
+    try:
+        out = json.loads(p.stdout)
+    except ValueError:
+        raise RuntimeError(f"generated code crashed: {p.stderr[-300:]}") from None
+    if "err" in out:
+        raise RuntimeError(out["err"])
+    if not isinstance(out["ok"], dict):
+        raise TypeError("answer() must return a dict")
+    return out["ok"]
 
 
 def ask(path: str, question: str, retries: int = 2) -> SheetResult:
@@ -175,8 +191,12 @@ class SheetSolver:
         return path.lower().endswith(".pdf") and "/opening_design/" in path.replace("\\", "/")
 
     def solve(self, path: str, question: str) -> Answer | None:
+        import os
+
         from plansight.config import resolve
 
+        if os.getenv("PLANSIGHT_NO_LLM", "") in ("1", "true"):
+            return None  # needs Nemotron to write the program
         full = str(resolve(path))
         try:
             res = ask(full, question)

@@ -51,7 +51,7 @@ def _detect(name: str, path: str):
 
 
 def verify_enabled() -> bool:
-    if os.getenv("PLANSIGHT_VERIFY", "1") in ("0", "false"):
+    if os.getenv("PLANSIGHT_VERIFY", "1") in ("0", "false") or os.getenv("PLANSIGHT_NO_LLM", "") in ("1", "true"):
         return False
     try:
         from plansight.vlm.nemotron import backend

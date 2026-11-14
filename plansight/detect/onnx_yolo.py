@@ -76,6 +76,38 @@ class Detector:
         return sorted(dets, key=lambda d: -d.conf)
 
 
+def tiled(det: Detector, image: Image.Image, scale: float = 2.0, conf: float = 0.05, iou: float = 0.5,
+          overlap: float = 0.2) -> list[Det]:
+    """Upscale by `scale`, run the detector on imgsz-sized tiles (with overlap), map back, merge with class-wise NMS.
+
+    Small symbols (windows in dense plans) cover more input pixels than in the single letterboxed pass.
+    """
+    im = image.convert("RGB")
+    W, H = im.size
+    big = im.resize((round(W * scale), round(H * scale)), Image.LANCZOS) if scale != 1 else im
+    BW, BH = big.size
+    t = det.imgsz
+    step = int(t * (1 - overlap))
+    xs = list(range(0, max(BW - t, 0) + 1, step)) or [0]
+    ys = list(range(0, max(BH - t, 0) + 1, step)) or [0]
+    if xs[-1] + t < BW:
+        xs.append(BW - t)
+    if ys[-1] + t < BH:
+        ys.append(BH - t)
+    raw: list[Det] = []
+    for y in ys:
+        for x in xs:
+            tile = big.crop((x, y, min(x + t, BW), min(y + t, BH)))
+            for d in det(tile, conf=conf, iou=iou):
+                x0, y0, x1, y1 = d.bbox
+                raw.append(Det(d.cls, d.conf, ((x0 + x) / scale, (y0 + y) / scale, (x1 + x) / scale, (y1 + y) / scale)))
+    if not raw:
+        return []
+    xywh = [[d.bbox[0], d.bbox[1], d.bbox[2] - d.bbox[0], d.bbox[3] - d.bbox[1]] for d in raw]
+    idx = cv2.dnn.NMSBoxesBatched(xywh, [d.conf for d in raw], [det.names.index(d.cls) for d in raw], conf, iou)
+    return sorted((raw[i] for i in np.array(idx).reshape(-1)), key=lambda d: -d.conf)
+
+
 @lru_cache(maxsize=4)
 def load(name: str) -> Detector | None:
     """models/<name>.onnx (+ <name>.json with names, imgsz, per-kind thresholds); None if not downloaded."""

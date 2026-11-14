@@ -11,8 +11,9 @@ def _registry() -> dict[str, Solver]:
     from plansight.solvers.cubicasa import CubicasaSolver
     from plansight.solvers.ifc import IfcSolver
     from plansight.solvers.swiss import SwissSolver
+    from plansight.sheets.qa import SheetSolver
 
-    return {s.name: s for s in [SwissSolver(), IfcSolver(), CubicasaSolver()]}
+    return {s.name: s for s in [SwissSolver(), IfcSolver(), CubicasaSolver(), SheetSolver()]}
 
 
 def get_solver(name: str) -> Solver:
