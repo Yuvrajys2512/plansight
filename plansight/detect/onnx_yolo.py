@@ -108,6 +108,59 @@ def tiled(det: Detector, image: Image.Image, scale: float = 2.0, conf: float = 0
     return sorted((raw[i] for i in np.array(idx).reshape(-1)), key=lambda d: -d.conf)
 
 
+def sahi(det: Detector, image: Image.Image, conf: float = 0.05, iou: float = 0.5, overlap: float = 0.25,
+         min_ratio: float = 1.6, ios: float = 0.6) -> list[Det]:
+    """Slicing-aided inference (SAHI, arXiv 2202.06934) for big sheets: the full letterboxed pass PLUS native-resolution
+    imgsz tiles with `overlap`, merged per class. Plans whose long side is < min_ratio x imgsz get the plain pass only.
+
+    Tile boxes cut by an interior tile edge are dropped (the overlapping neighbour sees that symbol whole); duplicates
+    are merged by class-wise NMS (IoU) and by intersection-over-smaller (`ios`), keeping the most confident box.
+    """
+    im = image.convert("RGB")
+    W, H = im.size
+    full = det(im, conf=conf, iou=iou)
+    t = det.imgsz
+    if max(W, H) < min_ratio * t:
+        return full
+    step = int(t * (1 - overlap))
+    xs = list(range(0, max(W - t, 0) + 1, step)) or [0]
+    ys = list(range(0, max(H - t, 0) + 1, step)) or [0]
+    if xs[-1] + t < W:
+        xs.append(W - t)
+    if ys[-1] + t < H:
+        ys.append(H - t)
+    raw = list(full)
+    for y in ys:
+        for x in xs:
+            x1, y1 = min(x + t, W), min(y + t, H)
+            for d in det(im.crop((x, y, x1, y1)), conf=conf, iou=iou):
+                a0, b0, a1, b1 = d.bbox
+                cut = (x > 0 and a0 <= 1) or (y > 0 and b0 <= 1) or (x1 < W and a1 >= x1 - x - 1) or \
+                      (y1 < H and b1 >= y1 - y - 1)
+                if not cut:
+                    raw.append(Det(d.cls, d.conf, (a0 + x, b0 + y, a1 + x, b1 + y)))
+    raw.sort(key=lambda d: -d.conf)
+    kept: list[Det] = []
+    for d in raw:
+        dup = False
+        for k in kept:
+            if k.cls != d.cls:
+                continue
+            ix = max(0.0, min(d.bbox[2], k.bbox[2]) - max(d.bbox[0], k.bbox[0]))
+            iy = max(0.0, min(d.bbox[3], k.bbox[3]) - max(d.bbox[1], k.bbox[1]))
+            inter = ix * iy
+            if inter <= 0:
+                continue
+            ad = (d.bbox[2] - d.bbox[0]) * (d.bbox[3] - d.bbox[1])
+            ak = (k.bbox[2] - k.bbox[0]) * (k.bbox[3] - k.bbox[1])
+            if inter / max(ad + ak - inter, 1e-6) > iou or inter / max(min(ad, ak), 1e-6) > ios:
+                dup = True
+                break
+        if not dup:
+            kept.append(d)
+    return kept
+
+
 @lru_cache(maxsize=4)
 def load(name: str) -> Detector | None:
     """models/<name>.onnx (+ <name>.json with names, imgsz, per-kind thresholds); None if not downloaded."""

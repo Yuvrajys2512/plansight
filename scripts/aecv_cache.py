@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from plansight.config import RUNS  # noqa: E402
 
 Image.MAX_IMAGE_PIXELS = None
-MODELS = {"objects": "cubicasa_objects", "rooms": "cubicasa_rooms"}
+MODELS = {"objects": "cubicasa_objects", "objects_v2": "cubicasa_objects_v2", "rooms": "cubicasa_rooms"}
 
 
 def aecv_plans(repo: Path):
@@ -56,13 +56,17 @@ def main():
                     rec = {"plan": name, "tokens": [[t.text, round(t.confidence, 3), *(round(v, 1) for v in t.bbox)]
                                                     for t in toks]}
                 else:
-                    from plansight.detect.onnx_yolo import load, tiled
+                    from plansight.detect.onnx_yolo import load, sahi, tiled
 
                     model, variant = what.split(":")
                     det = load(MODELS[model])
                     im = Image.open(path).convert("RGB")
-                    ds = det(im, conf=0.05) if variant == "plain" else tiled(det, im, scale=float(variant[5:] or 2),
-                                                                             conf=0.05)
+                    if variant == "plain":
+                        ds = det(im, conf=0.05)
+                    elif variant == "sahi":
+                        ds = sahi(det, im, conf=0.05)
+                    else:
+                        ds = tiled(det, im, scale=float(variant[5:] or 2), conf=0.05)
                     rec = {"plan": name, "path": path, "size": im.size,
                            "dets": [[d.cls, round(float(d.conf), 4), *(round(float(x), 1) for x in d.bbox)]
                                     for d in ds]}
