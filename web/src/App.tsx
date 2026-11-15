@@ -111,6 +111,8 @@ function MainApp() {
   const [drag, setDrag] = useState<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
   const [acceptedMain, setAcceptedMain] = useState<number[]>([]);
+  const [qResults, setQResults] = useState<Record<string, Answer>>({});
+  const [runningAll, setRunningAll] = useState<string | null>(null);
   const [mode3d, setMode3d] = useState(false);
   const [snapOpen, setSnapOpen] = useState(false);
   const [arOpen, setArOpen] = useState(false);
@@ -134,7 +136,7 @@ function MainApp() {
   useEffect(() => { fetch('/api/aecv/plans').then(r => r.ok ? r.json() : fetch('/aecv/plans.json').then(x => x.json())).then(setAecv).catch(() => {}); }, []);
   useEffect(() => {
     if (!selected) return;
-    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setAcceptedMain([]); setMode3d(false);
+    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setAcceptedMain([]); setMode3d(false); setQResults({}); setRunningAll(null);
     fetch(`/api/examples?path=${encodeURIComponent(selected.path)}`).then(r => r.ok ? r.json() : { examples: [] }).then(d => setExamples(d.examples || []));
     fetch(`/api/meta?path=${encodeURIComponent(selected.path)}`).then(r => r.json()).then(d => { if (d.width) setSize({ width: d.width, height: d.height }); });
   }, [selected]);
@@ -187,7 +189,7 @@ function MainApp() {
     try {
       const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question: q }) });
       const result: Answer = await response.json(); await minWait;
-      setAnswer(result); setAnswerKey(k => k + 1); setTimeout(loadStats, 1500);
+      setAnswer(result); setAnswerKey(k => k + 1); setTimeout(loadStats, 1500); setQResults(v => ({ ...v, [q]: result }));
       if (selected.source === 'ifc_models' && !result.abstained && !result.evidence?.length && ifcClassOf(result)) { sfx.whoosh(); setMode3d(true); }
       const img = imageRef.current;
       if (img && result.evidence?.length === 1) {
@@ -202,6 +204,29 @@ function MainApp() {
     } catch { await minWait; const a = { abstained: true, reason: 'The API could not be reached.' }; setAnswer(a); setAnswerKey(k => k + 1); return a; }
     finally { setBusy(false); }
   };
+
+  // Question list with status (review queue): sure / check / won't guess, like a reviewer's worklist.
+  const qStatus = (a?: Answer) => !a ? 'todo' : a.abstained ? 'abstain' : (a.review || (a.confidence ?? 1) < .9) ? 'check' : 'sure';
+  const statusLabel: Record<string, string> = { todo: 'not asked', sure: '✓ sure', check: '⚠ check', abstain: "✕ won't guess" };
+  const runAll = async () => {
+    if (!selected || runningAll) return;
+    const path = selected.path;
+    for (const q of examples) {
+      if (qResults[q]) continue;
+      setRunningAll(q);
+      try {
+        const r = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path, question: q }) });
+        const a: Answer = await r.json();
+        setQResults(v => ({ ...v, [q]: a }));
+      } catch { setQResults(v => ({ ...v, [q]: { abstained: true, reason: 'The API could not be reached.' } })); }
+    }
+    setRunningAll(null); setTimeout(loadStats, 800);
+  };
+  const openResult = (q: string) => {
+    const a = qResults[q]; if (!a) { void ask(q); return; }
+    setQuestion(q); setAnswer(a); setAnswerKey(k => k + 1); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]); setAcceptedMain([]);
+  };
+  const qCounts = examples.reduce((m, q) => { const st = qStatus(qResults[q]); m[st] = (m[st] || 0) + 1; return m; }, {} as Record<string, number>);
 
   const route = useMemo(() => {
     const m = answer?.explanation?.match(/routed by (.+?) to (.+?)\./i);
@@ -356,7 +381,17 @@ function MainApp() {
       <aside className="panel ask">
         <div className="panel-head"><span className="kicker">Ask this drawing · any language</span><h3>What do you want to know?</h3></div>
         <div className="ask-box"><textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="How many doors are on this floor? · Montako ovea? · Wie viele Türen?" /><button className="btn-primary" onClick={() => void ask()} disabled={busy || !question.trim()}>{busy ? 'Reading…' : 'Ask ↗'}</button></div>
-        <div className="chips">{examples.map(q => <button key={q} disabled={busy} onClick={() => void ask(q)}>{q}</button>)}</div>
+        {examples.length > 0 && <div className="qlist">
+          <div className="qlist-head"><span className="kicker">Questions on this drawing</span>
+            {(qCounts.todo ?? 0) > 0 ? <button className="btn-ghost sm" disabled={busy || !!runningAll} onClick={() => void runAll()}>{runningAll ? `Answering ${examples.length - (qCounts.todo ?? 0) + 1}/${examples.length}…` : 'Run all ▶'}</button>
+              : <span className="qsum"><b className="sure">{qCounts.sure ?? 0} sure</b> · <b className="check">{qCounts.check ?? 0} to check</b>{qCounts.abstain ? <> · <b className="abstain">{qCounts.abstain} won't guess</b></> : null}</span>}
+          </div>
+          {(qCounts.check ?? 0) + (qCounts.abstain ?? 0) > 0 && <div className="qqueue">Review queue: <b>{(qCounts.check ?? 0) + (qCounts.abstain ?? 0)}</b> answer{(qCounts.check ?? 0) + (qCounts.abstain ?? 0) > 1 ? 's' : ''} sent to a person · the rest need no check</div>}
+          {examples.map(q => { const a = qResults[q], st = runningAll === q ? 'running' : qStatus(a); return <button key={q} className={`qrow ${st} ${question === q && answer ? 'on' : ''}`} disabled={busy} onClick={() => openResult(q)}>
+            <span className="qtext">{q}</span>
+            <span className="qmeta">{a && !a.abstained && <b>{String(a.value)}{a.review && a.review.low !== a.review.high ? ` (${a.review.low}–${a.review.high})` : ''}</b>}<i>{st === 'running' ? '◌ reading' : statusLabel[st]}</i></span>
+          </button>; })}
+        </div>}
         {answer && <div className={`answer ${answer.abstained ? 'abstain' : ''}`} key={answerKey}>
           {answer.abstained ? <><span className="kicker warn">Not confident enough</span><h3>PlanSight won't guess</h3><p>{answer.reason}</p></> : <>
             <div className="answer-top"><span className="kicker">Answer</span><span className="badge">{answer.cached ? 'cached · $0' : answer.method || 'deterministic'}</span></div>

@@ -418,3 +418,22 @@ button { font: inherit; color: inherit; }
 .held-chip { margin-left: 10px; font: 600 10.5px var(--mono); color: var(--lime); border: 1px solid #c8ff3d44; background: var(--lime-dim); border-radius: 8px; padding: 5px 8px; white-space: nowrap; }
 .held-chip + .ticker { margin-left: 10px; }
 @media (max-width: 900px) { .held-chip { display: none; } }
+
+/* question list / review queue */
+.qlist { display: flex; flex-direction: column; gap: 6px; padding: 12px 16px 4px; }
+.qlist-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 30px; }
+.qlist-head .btn-ghost.sm { padding: 6px 10px; font-size: 11px; }
+.qsum { font: 500 10.5px var(--mono); color: var(--muted); } .qsum .sure { color: var(--lime); } .qsum .check { color: var(--amber); } .qsum .abstain { color: var(--red); }
+.qqueue { font-size: 11px; color: #ffd9a0; border: 1px solid #ffb54744; background: #ffb5470f; border-radius: 8px; padding: 6px 9px; } .qqueue b { color: var(--amber); }
+.qrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; text-align: left; border: 1px solid var(--line); border-left: 3px solid var(--line2); background: #ffffff04; border-radius: 9px; padding: 8px 10px; font-size: 11.5px; color: var(--muted); cursor: pointer; transition: all .15s; }
+.qrow:hover:not(:disabled) { border-color: #c8ff3d77; color: var(--text); }
+.qrow:disabled { opacity: .6; cursor: wait; }
+.qrow.on { color: var(--text); background: #ffffff0a; }
+.qrow .qtext { overflow-wrap: anywhere; }
+.qrow .qmeta { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: nowrap; }
+.qrow .qmeta b { font: 700 13px var(--mono); color: var(--text); }
+.qrow .qmeta i { font: 600 9.5px var(--mono); font-style: normal; text-transform: uppercase; letter-spacing: .06em; color: var(--dim); }
+.qrow.sure { border-left-color: var(--lime); } .qrow.sure .qmeta i { color: var(--lime); }
+.qrow.check { border-left-color: var(--amber); } .qrow.check .qmeta i { color: var(--amber); }
+.qrow.abstain { border-left-color: var(--red); } .qrow.abstain .qmeta i { color: var(--red); }
+.qrow.running { border-left-color: var(--cyan); } .qrow.running .qmeta i { color: var(--cyan); }
