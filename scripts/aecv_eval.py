@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import itertools
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -20,7 +21,7 @@ from scripts.aecv_cache import aecv_plans  # noqa: E402
 from scripts.aecv_report import plansight  # noqa: E402
 from scripts.aecv_tune import load  # noqa: E402
 
-REPO = Path(r"C:\Users\YUVRAJ~1\AppData\Local\Temp\aecv\repo")
+REPO = Path(os.environ.get("AECV_REPO", "aecv-repo"))  # local clone of the AECV-Bench repo
 BASE = dict(td=0.35, tw=0.30, gap=6, xiou=0.0, dbl=0.0, tw_low=None, style_conf=0.0, onwall=None, wsup=0.2,
             wcand=None)
 

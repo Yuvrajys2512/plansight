@@ -5,7 +5,7 @@ from pathlib import Path
 from PIL import Image
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = Path(r"D:\Junction\runs\aecv-report\plans.json")
+SOURCE = Path(__file__).resolve().parents[1] / "runs" / "aecv-report" / "plans.json"
 DEST = ROOT / "web" / "public" / "aecv"
 
 def main() -> None:

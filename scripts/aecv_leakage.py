@@ -10,7 +10,7 @@ from PIL import Image
 
 Image.MAX_IMAGE_PIXELS = None
 ROOT = Path(__file__).resolve().parents[1]
-AECV = Path(os.environ.get("AECV_DIR", r"C:\Users\YUVRAJ~1\AppData\Local\Temp\aecv\repo\data\Use Case 1 - Object Counting\1 - Full Datasets"))
+AECV = Path(os.environ.get("AECV_DIR", str(Path(os.environ.get("AECV_REPO", "aecv-repo")) / "data" / "Use Case 1 - Object Counting" / "1 - Full Datasets")))
 CC = ROOT / "junction-dataset" / "data" / "cubicasa5k"
 
 

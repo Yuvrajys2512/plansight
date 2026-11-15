@@ -34,3 +34,15 @@ ROADMAP.md
 models/
 
 deploy/bundle/
+
+# personal notes / handoffs (local only)
+handoff.md
+next_session.md
+NEXT_MODEL_PROMPT.md
+STRATEGY.md
+WOW_PLAN.md
+project_understanding.md
+docs/SUBMISSION.md
+web/.cursorrules
+web/AI_INSTRUCTIONS.md
+web/PROMPT.md
