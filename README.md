@@ -48,7 +48,8 @@ answer + evidence boxes on the sheet + cost of the question  →  reviewer click
 |---|---|---|
 | swiss_dwellings (4,000-question sample, all languages) | **99.5%** | $0 |
 | ifc_models | **99.7%** | $0 |
-| cubicasa5k objects (CubiCasa **test** split; detectors trained on train split only) | toilet 92, sink 86, shower/bath 77, door 69, window 49 | ~$0.00003 |
+| cubicasa5k, **every question kind** (1,000 Stoa questions on 356 held-out test drawings, EN + FI; `scripts/eval_cubicasa_test.py`) | **82.7%** (toilets 95, saunas 94, floors 93, sinks 90, kitchens 88, showers/baths 84, bedrooms 84, doors 60, windows 44) | ~$0.00003 |
+| cubicasa5k objects, detector count only (CubiCasa **test** split; detectors trained on train split only) | toilet 92, sink 86, shower/bath 77, door 69, window 49 | ~$0.00003 |
 | opening_design schedule sheets (numeric answers) | 83% | ~$0.001 |
 | Multilingual router (held-out) | 99.8% | $0 for 87% of questions |
 | ifc_bench | not handled yet | – |

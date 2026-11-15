@@ -25,7 +25,8 @@ the count updates live. A human verifies the answer in seconds, and every correc
 
 **Results.**
 - Stoa dataset: Swiss plans 99.5% and IFC models 99.7% (all languages, $0); multilingual routing 99.8% held-out;
-  CubiCasa test split: toilets 92%, sinks 86%; schedule sheets 83%.
+  CubiCasa raster plans, all question kinds on 356 held-out drawings: 82.7% at ~$0 (toilets 95%, saunas 94%, showers/baths
+  84%; doors 60% and windows 44% are the hard part, which is where escalation comes in); schedule sheets 83%.
 - AECV-Bench held-out split (never tuned on). We first audited leakage: 20 of its 120 plans are in our detector's
   training data (CubiCasa5K), so we drop them for every system. On the clean held-out split PlanSight averages **62%** vs
   Gemini 3.5 Flash 68%, Claude Fable 5 67%, GPT-5.5 63%, at **$0.0005 per plan, 60–450× cheaper**, with every count boxed.
