@@ -32,8 +32,8 @@ the count updates live. A human verifies the answer in seconds, and every correc
   It doesn't beat frontier yet (Gemini 3 Pro gets 47% on doors vs our 39%), and we say so.
 - **Cheap first, escalate when unsure.** PlanSight knows when it's unsure (borderline symbols, readers disagreeing) and
   sends only those plans to Gemini 3.5 Flash, for only the unsure kinds. On the held-out split this beats **every
-  published frontier model on doors (48% vs 47%) and windows (43% vs 38%)**, ties the best mean (65%), and costs less
-  than Gemini alone. Clean split: doors 49%, windows 47%. (Escalated answers are AECV's published Gemini 3.5 Flash
+  published frontier model on doors (50% vs 47%) and windows (42% vs 38%)**, ties the best mean (65%), and costs 28%
+  less than Gemini alone ($0.022 vs $0.031 a plan). Clean split: doors 51%, windows 45%. (Escalated answers are AECV's published Gemini 3.5 Flash
   answers for the same prompt; our live call is wired up but the free tier ran out before a full live re-run.)
 - Before that, we tried five ways to close the gap (rule tuning, SAHI tiling, a wall check, a detector retrained on Verda
   with tiles + style augmentation, an ensemble). Each was tuned on one half of the benchmark and judged on the other.

@@ -148,7 +148,8 @@ def main():
     for n in gold:
         _, _, _, tr = plansight(n, det, ocr, nemo.get("v0-1536", {}), rooms)
         uk = unsure_kinds([(x[0], x[1]) for x in (det.get(n) or {}).get("dets", [])],
-                          {"bedroom": [v for v in tr["Bedroom"]["voters"].values() if isinstance(v, int)]})
+                          {"bedroom": [v for v in tr["Bedroom"]["voters"].values() if isinstance(v, int)]},
+                          long_side=max((det.get(n) or {}).get("size", [0, 0])))
         esc[n] = dict(ours[n])
         for k in uk:
             v = (gem.get(n) or {}).get(k.capitalize())

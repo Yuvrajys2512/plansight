@@ -4,8 +4,9 @@ PlanSight answers every floor plan itself (detectors + OCR + Nemotron voters, ~$
 does the plan go to a frontier model (Gemini 3.5 Flash), and only the unsure kinds take its answer. Doors and windows
 keep PlanSight's evidence boxes either way, so a human can still see what was found and what the frontier model added.
 
-Rule (tuned on AECV-Bench split A only, scripts/aecv_escalate.py; held-out split B: doors 48%, windows 43%, beating
-every published frontier model on both):
+Rule (tuned on AECV-Bench split A only, scripts/aecv_escalate.py; held-out split B: doors 50%, windows 42%, beating
+every published frontier model on both, 70% of plans escalated, $0.022/plan vs $0.031 for Gemini alone):
+  gate    a plan escalates only if big (long side >= 1200 px) or in an unfamiliar style (style_conf < 0.70)
   door    unsure if >= 1 door detection scores in [0.20, 0.55)      (borderline symbols)
   window  unsure if >= 3 window detections score in [0.15, 0.50)
   bedroom unsure if the three room readers disagree by >= 2
@@ -33,6 +34,7 @@ USD_PER_CALL = 0.0314  # AECV-Bench's measured mean cost per plan for Gemini 3.5
 
 RULE = {"door": (0.20, 0.55, 1), "window": (0.15, 0.50, 3)}
 BEDROOM_SPREAD = 2
+GATE_SIDE, GATE_STYLE = 1200, 0.70  # door/window escalation only on big plans or unfamiliar drawing styles
 
 PROMPT = """You are an expert floor-plan analyst trained to interpret architectural and engineering drawings in any language.
 
@@ -75,14 +77,22 @@ WC, W.C., Bath, Bain, Douche, Shower, SDB, Bathroom, Toilet, etc.
 Make sure your counts follow all the rules above."""
 
 
-def unsure_kinds(dets, room_voters: dict | None = None) -> list[str]:
-    """dets: [(cls, conf), ...] at conf >= 0.05. room_voters: {"bedroom": [counts of the 3 readers]}."""
+def style_conf(dets) -> float:
+    """Mean of the 10 most confident door/window scores: low = a drawing style the detector hasn't seen."""
+    top = sorted((s for c, s in dets if c in ("door", "window")), reverse=True)[:10]
+    return sum(top) / len(top) if top else 0.0
+
+
+def unsure_kinds(dets, room_voters: dict | None = None, long_side: int | None = None) -> list[str]:
+    """dets: [(cls, conf), ...] at conf >= 0.05. room_voters: {"bedroom": [counts of the 3 readers]}.
+    long_side: plan's long side in px; with it, a plan escalates only if it is big or in an unfamiliar style."""
     out = []
+    gated = long_side is None or long_side >= GATE_SIDE or style_conf(dets) < GATE_STYLE
     for kind, (lo, hi, n) in RULE.items():
-        if sum(1 for c, s in dets if c == kind and lo <= s < hi) >= n:
+        if gated and sum(1 for c, s in dets if c == kind and lo <= s < hi) >= n:
             out.append(kind)
     v = [x for x in (room_voters or {}).get("bedroom", []) if isinstance(x, int)]
-    if v and max(v) - min(v) >= BEDROOM_SPREAD:
+    if gated and v and max(v) - min(v) >= BEDROOM_SPREAD:
         out.append("bedroom")
     return out
 

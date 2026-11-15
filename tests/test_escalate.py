@@ -18,3 +18,9 @@ def test_windows_need_three_borderline_hits():
 def test_bedroom_readers_disagreeing_escalates():
     assert unsure_kinds([], {"bedroom": [1, 3, 2]}) == ["bedroom"]
     assert unsure_kinds([], {"bedroom": [2, 3, 2]}) == []
+
+
+def test_small_familiar_plan_does_not_escalate_doors():
+    dets = [("door", 0.9)] * 10 + [("door", 0.3)]
+    assert unsure_kinds(dets, long_side=800) == []
+    assert unsure_kinds(dets, long_side=1600) == ["door"]
