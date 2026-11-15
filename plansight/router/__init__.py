@@ -36,7 +36,8 @@ def parse(path: str, question: str, *, use_llm: bool | None = None, bank=None) -
     """Route a question about the drawing at `path`. Returns Route with template None if nothing fits.
     Gemma is used unless use_llm=False or env PLANSIGHT_NO_LLM=1 (tests, offline demo)."""
     if use_llm is None:
-        use_llm = os.getenv("PLANSIGHT_NO_LLM", "") not in ("1", "true")
+        # PLANSIGHT_GEMMA_ROUTER=1 keeps just this cheap Gemma fallback on when other LLM calls are off (public demo).
+        use_llm = os.getenv("PLANSIGHT_NO_LLM", "") not in ("1", "true") or os.getenv("PLANSIGHT_GEMMA_ROUTER") == "1"
     from plansight.router.bank import default_bank
 
     t0 = time.perf_counter()

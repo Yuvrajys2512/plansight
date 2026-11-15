@@ -26,7 +26,7 @@ image = (
                  "psycopg[binary]", "cloudinary", "trimesh", "mapbox-earcut")
     # rapidocr depends on full opencv-python (needs X11); swap in the headless build that provides the same cv2
     .run_commands("pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless")
-    .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PYTHONPATH": "/root"})
+    .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PLANSIGHT_GEMMA_ROUTER": "1", "PYTHONPATH": "/root"})
     .add_local_dir(ROOT / "deploy" / "bundle" / "junction-dataset", "/root/junction-dataset")
     .add_local_dir(ROOT / "models", "/root/models")
     .add_local_dir(ROOT / "cache", "/root/cache", ignore=IGNORE)
@@ -40,7 +40,7 @@ app = modal.App("plansight", image=image)
 from dotenv import dotenv_values  # noqa: E402
 
 _env = {**dotenv_values(ROOT / ".env"), **os.environ}
-addon_keys = modal.Secret.from_dict({k: _env[k] for k in ("DATABASE_URL", "CLOUDINARY_URL", "ELEVENLABS_API_KEY", "ELEVENLABS_AGENT_ID") if _env.get(k)})
+addon_keys = modal.Secret.from_dict({k: _env[k] for k in ("DATABASE_URL", "CLOUDINARY_URL", "ELEVENLABS_API_KEY", "ELEVENLABS_AGENT_ID", "GEMINI_API_KEY") if _env.get(k)})
 # runs/ (feedback.jsonl from the click-to-reject UI) survives container restarts:
 #   python -m modal volume get plansight-runs feedback.jsonl .
 runs = modal.Volume.from_name("plansight-runs", create_if_missing=True)
