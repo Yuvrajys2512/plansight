@@ -155,6 +155,10 @@ The demo shows each voter's count, which one was used and why, plus Nemotron's o
   (`web/src/Voice.tsx`, `scripts/create_voice_agent.py`).
 - **Modal**: hosts the public demo (FastAPI + React UI + ONNX detectors, CPU, scales to zero) and stores reviewer
   corrections on a Modal volume.
+- **Gemini API (Gemini 3.5 Flash)**: the escalation tier in "cheap first, escalate when unsure". Only plans where PlanSight
+  is unsure (borderline detections, disagreeing room readers, unfamiliar drawing styles) go to Gemini, and only the unsure
+  kinds take its answer (`plansight/escalate.py`). Result on held-out split B: doors 43→50, windows 38→42, mean ties the
+  best frontier model at $0.022/plan vs $0.031 for Gemini alone. See "Cheap first, escalate when unsure" above.
 
 ## Run it locally
 
