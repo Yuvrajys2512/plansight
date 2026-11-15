@@ -68,8 +68,11 @@ def _background(fn) -> None:
         threading.Thread(target=_run, args=(fn,), daemon=True).start()
 
 
+SOLVER_VERSION = "2026-11-15-dedupe"  # bump when answers change, so the cache never serves an outdated answer
+
+
 def cache_key(path: str, question: str) -> str:
-    return hashlib.sha256((path.strip() + "\0" + question.strip().casefold()).encode()).hexdigest()
+    return hashlib.sha256((SOLVER_VERSION + "\0" + path.strip() + "\0" + question.strip().casefold()).encode()).hexdigest()
 
 
 def cached_answer(path: str, question: str):
