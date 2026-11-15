@@ -156,7 +156,7 @@ function MainApp() {
   const canvasRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => { fetch('/api/drawings').then(r => r.json()).then((items: Drawing[]) => { setDrawings(items); const first = items.find(d => d.source === 'cubicasa5k') || items[0]; if (first) setSelected(first); }); }, []);
-  useEffect(() => { fetch('/api/aecv/plans').then(r => r.ok ? r.json() : fetch('/aecv/plans.json').then(x => x.json())).then(setAecv).catch(() => {}); }, []);
+  useEffect(() => { fetch('/aecv/plans.json').then(r => r.ok ? r.json() : fetch('/api/aecv/plans').then(x => x.json())).then(setAecv).catch(() => {}); }, []);
   useEffect(() => {
     if (!selected) return;
     setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setAcceptedMain([]); setMode3d(false); setQResults({}); setRunningAll(null);
@@ -421,7 +421,7 @@ function MainApp() {
             <div className="answer-value">{liveCount !== null ? liveCount : String(answer.value)}<small>{answer.unit && answer.unit !== 'count' ? answer.unit : ''}</small></div>
             {review && review.low !== review.high && <div className="range">between <b>{review.low}</b> and <b>{review.high}</b></div>}
             {(answer.confidence ?? 1) < 1 && <div className="conf"><span>confidence</span><i><em style={{ width: `${Math.round((answer.confidence ?? 1) * 100)}%` }} /></i><b>{Math.round((answer.confidence ?? 1) * 100)}% · {confWord(answer.confidence ?? 1)}</b></div>}
-            {review && <div className="check"><b>Check before you trust this</b><span>{review.reason}</span></div>}
+            {review && <div className="check-note"><b>Check before you trust this</b><span>{review.reason}</span></div>}
             {(rejectedMain.length > 0 || acceptedMain.length > 0) && <div className="corrected">You {[rejectedMain.length ? `rejected ${rejectedMain.length} box${rejectedMain.length > 1 ? 'es' : ''}` : '', acceptedMain.length ? `added ${acceptedMain.length} possible item${acceptedMain.length > 1 ? 's' : ''}` : ''].filter(Boolean).join(' and ')}: corrected from {String(answer.value)} to {liveCount}</div>}
             {isCount && evidence.length > 0 && <button className="btn-ghost sm export" onClick={exportReview}>Export review (CSV)</button>}
             <p className="explain">{answer.explanation}</p>
