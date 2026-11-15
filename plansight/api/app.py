@@ -23,6 +23,9 @@ from plansight.config import RUNS
 
 app = FastAPI(title="PlanSight API")
 ALLOWED_SOURCES = ("swiss_dwellings", "ifc_models", "cubicasa5k")
+# Listed first in the demo: colorful-268 has one near-miss window the review UI shows as "possible"; adding it gives the
+# true count (3 -> 4), so a reviewer sees the human-in-the-loop fix on a real miss.
+FEATURED = ("data/cubicasa5k/colorful-268.png",)
 
 
 def _safe_path(raw: str) -> tuple[Path, str]:
@@ -87,7 +90,7 @@ def _records() -> dict[str, list[dict]]:
             if src in grouped:
                 by_path.setdefault(row["path"], []).append(row)
     # Keep the selection grounded in gold questions and only include solver-correct paths.
-    for raw, rows in sorted(by_path.items(), key=lambda pair: (source_of(pair[0]), pair[0].lower().endswith(".ifc"), pair[0])):
+    for raw, rows in sorted(by_path.items(), key=lambda pair: (source_of(pair[0]), pair[0] not in FEATURED, pair[0].lower().endswith(".ifc"), pair[0])):
         src = source_of(raw)
         if len(grouped[src]) >= 3:
             continue
