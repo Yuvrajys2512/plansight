@@ -9,7 +9,8 @@ import { LiveAr } from './LiveAr';
 
 type Drawing = { path: string; source: string; title: string; thumbnail_url: string; sample_question?: string; is_model?: boolean; model_path?: string | null; sheet_path?: string };
 type Evidence = { file: string; page: number; bbox: [number, number, number, number]; polygon?: [number, number][] | null; label?: string; crop_url?: string | null; highlight_url?: string | null };
-type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?: boolean; share_url?: string | null; scene_kind?: string | null; scene_room_names?: string[]; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string } };
+type Answer = { value?: unknown; unit?: string | null; evidence?: Evidence[]; method?: string; confidence?: number; explanation?: string; solver?: string; latency_ms?: number; cost_usd?: number; naive_cost_usd?: number; abstained?: boolean; reason?: string; cached?: boolean; share_url?: string | null; scene_kind?: string | null; scene_room_names?: string[]; model_fact?: { element: string; guid?: string; property: string; value: unknown; element_name?: string }; review?: Review | null };
+type Review = { low: number; high: number; likely: number[]; possible: number[][]; reason: string };
 type Stats = { enabled: boolean; questions?: number; answered?: number; cost_usd?: number; naive_cost_usd?: number; corrections?: number };
 type AecvPlan = { image_width: number; image_height: number; split: string; gold: Record<string, number>; frontier: Record<string, Record<string, number | null>>; frontier_cost_usd: Record<string, number | null>; plansight: Record<string, { count: number; evidence: { bbox: [number, number, number, number]; label: string }[]; note?: string | null }>; plansight_cost_usd: number; nemotron?: { counts: Record<string, number | null>; cost_usd: number; latency_ms: number; model: string } | null; trace?: Record<string, { rule: string; voters: Record<string, number | null>; used: string | string[]; after_merge?: number }> };
 
@@ -73,7 +74,7 @@ function Intro({ onEnter, onBench, onSnap, stats }: { onEnter: () => void; onBen
       <span className="kicker">AECV-Bench · 120 real floor plans · 30 frontier AI models</span>
       <h1>The best AI model in the world counts the doors on a floor plan correctly <span className="hot">{Math.round(pct)}%</span> of the time.</h1>
       <p>Bigger models won't fix that. It's a perception problem, not a reasoning one. <b>PlanSight</b> answers questions about construction drawings with fine-tuned detectors, exact geometry and NVIDIA Nemotron, <b>shows you every item it counted</b>, and costs a fraction of a cent.</p>
-      <div className="intro-stats"><div><b>62%</b><span>PlanSight on unseen plans<br />(best frontier: 65%)</span></div><div><b>1/60</b><span>of the cost of the<br />cheapest frontier model</span></div><div><b>99.5%</b><span>on Stoa's vector plans<br />and IFC models, $0</span></div></div>
+      <div className="intro-stats"><div><b>50% vs 47%</b><span>doors on unseen plans:<br />beats every frontier model</span></div><div><b>1/60</b><span>of the cost of the<br />cheapest frontier model</span></div><div><b>99.5%</b><span>on Stoa's vector plans<br />and IFC models, $0</span></div></div>
       {stats?.enabled && (stats.questions ?? 0) > 0 && <div className="intro-live"><i className="pulse" />Live at Junction: <b>{(stats.questions ?? 0).toLocaleString()}</b> questions answered by visitors · <b>{money(stats.cost_usd ?? 0)}</b> spent · <b className="saved">{money(saved)}</b> saved vs a frontier model <em>Aiven Postgres</em></div>}
       <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Ask a drawing →</button><button className="btn-ghost" onClick={onBench}>Race the frontier models</button><button className="btn-ghost" onClick={onSnap}>📷 Snap your own plan</button></div>
     </div>
@@ -109,6 +110,7 @@ function MainApp() {
   const [offset, setOffset] = useState({ x: 0, y: 0 });
   const [drag, setDrag] = useState<{ x: number; y: number; ox: number; oy: number } | null>(null);
   const [rejectedMain, setRejectedMain] = useState<number[]>([]);
+  const [acceptedMain, setAcceptedMain] = useState<number[]>([]);
   const [mode3d, setMode3d] = useState(false);
   const [snapOpen, setSnapOpen] = useState(false);
   const [arOpen, setArOpen] = useState(false);
@@ -132,7 +134,7 @@ function MainApp() {
   useEffect(() => { fetch('/api/aecv/plans').then(r => r.ok ? r.json() : fetch('/aecv/plans.json').then(x => x.json())).then(setAecv).catch(() => {}); }, []);
   useEffect(() => {
     if (!selected) return;
-    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setMode3d(false);
+    setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setQuestion(''); setRejectedMain([]); setAcceptedMain([]); setMode3d(false);
     fetch(`/api/examples?path=${encodeURIComponent(selected.path)}`).then(r => r.ok ? r.json() : { examples: [] }).then(d => setExamples(d.examples || []));
     fetch(`/api/meta?path=${encodeURIComponent(selected.path)}`).then(r => r.json()).then(d => { if (d.width) setSize({ width: d.width, height: d.height }); });
   }, [selected]);
@@ -153,7 +155,18 @@ function MainApp() {
   const [shown, skipReveal] = useReveal(evidence.length, answerKey);
   const isCount = answer?.unit === 'count' || (typeof answer?.value === 'number' && Number.isInteger(answer.value) && !answer?.unit);
   const revealDone = shown >= evidence.length;
-  const liveCount = isCount && evidence.length ? Math.max(0, shown - rejectedMain.filter(i => i < shown).length) : null;
+  const review = answer?.review || null;
+  const liveCount = isCount && evidence.length ? Math.max(0, shown - rejectedMain.filter(i => i < shown).length + (revealDone ? acceptedMain.length : 0)) : null;
+  const confWord = (c: number) => c >= .9 ? 'sure' : c >= .7 ? 'likely' : 'check';
+  const exportReview = () => {
+    if (!answer) return;
+    const esc = (v: unknown) => `"${String(v ?? '').replace(/"/g, '""')}"`;
+    const box = (b: number[]) => b.slice(0, 4).map(v => Math.round(v)).join(' ');
+    const rows: unknown[][] = [['drawing', 'question', 'answer', 'corrected_count', 'low', 'high', 'confidence', 'rejected_boxes', 'accepted_boxes', 'cost_usd', 'reason'],
+      [selected?.path, question, answer.value, liveCount ?? answer.value, review?.low ?? '', review?.high ?? '', answer.confidence ?? '', rejectedMain.map(i => evidence[i] ? box([...evidence[i].bbox]) : '').join('; '), acceptedMain.map(i => review?.possible[i] ? box(review.possible[i]) : '').join('; '), answer.cost_usd ?? 0, review?.reason ?? '']];
+    const blob = new Blob([rows.map(r => r.map(esc).join(',')).join(String.fromCharCode(10))], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `plansight-review-${(selected?.path || 'drawing').split('/').pop()}.csv`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
   const numeric = typeof answer?.value === 'number' ? answer.value as number : Number.NaN;
   const rolled = useCountUp(Number.isFinite(numeric) ? numeric : 0, 1500, answerKey);
   const labelSize = useMemo(() => {
@@ -169,7 +182,7 @@ function MainApp() {
 
   const ask = async (q: string = question): Promise<Answer | null> => {
     if (!selected || !q.trim() || busy) return null;
-    sfx.scan(); setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]);
+    sfx.scan(); setQuestion(q); setBusy(true); setAnswer(null); setZoom(1); setOffset({ x: 0, y: 0 }); setRejectedMain([]); setAcceptedMain([]);
     const minWait = new Promise(r => setTimeout(r, 1300)); // let the "thinking" trace play even on $0 instant answers
     try {
       const response = await fetch('/api/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ path: selected.path, question: q }) });
@@ -208,7 +221,7 @@ function MainApp() {
     if (!hit) return `No drawing matches "${query}". Available: ${drawings.map(d => d.title).join(', ')}`;
     setView('demo'); setSelected(hit); return `Opened ${hit.title} (${sourceNames[hit.source] || hit.source}).`;
   };
-  const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null, boxes: evidence.filter((_, i) => !rejectedMain.includes(i)).map(e => e.bbox) };
+  const hl3d: Highlight = { sceneKind: answer?.scene_kind, roomNames: answer?.scene_room_names, ifcClass: ifcClassOf(answer), expected: typeof answer?.value === 'number' ? answer.value as number : null, boxes: [...evidence.filter((_, i) => !rejectedMain.includes(i)).map(e => e.bbox), ...acceptedMain.map(i => review?.possible[i]).filter(Boolean).map(b => [b![0], b![1], b![2], b![3]] as [number, number, number, number])] };
   const can3d = !!selected && ['swiss_dwellings', 'ifc_models', 'cubicasa5k'].includes(selected.source);
   const onSnap = (s: SnapInfo) => {
     setSnapOpen(false); sfx.whoosh();
@@ -248,6 +261,7 @@ function MainApp() {
     <nav className="tabs"><button className={view === 'demo' ? 'on' : ''} onClick={() => setView('demo')}>Ask a drawing</button><button className={view === 'aecv' ? 'on' : ''} onClick={() => setView('aecv')}>Frontier vs PlanSight</button></nav>
     <button className="snap-btn" onClick={() => setSnapOpen(true)}>📷 Snap your own plan</button>
     <button className="mute" title={muted ? 'Sound off' : 'Sound on'} onClick={() => sfx.setMuted(!muted)}>{muted ? '🔇' : '🔊'}</button>
+    <span className="held-chip" title="Stoa CubiCasa raster questions on held-out test drawings, no LLM">82.7% · 1,000 held-out questions</span>
     <div className="ticker">{stats?.enabled && stats.questions ? <><i className="pulse" /><b>{stats.questions.toLocaleString()}</b> questions · <b>{money(stats.cost_usd ?? 0)}</b> spent vs <b>{money(stats.naive_cost_usd ?? 0)}</b> frontier · <b>{stats.corrections ?? 0}</b> corrections <em>Aiven Postgres</em></> : <><i className="pulse" />live · CPU · scales to zero</>}</div>
   </header>;
 
@@ -323,9 +337,13 @@ function MainApp() {
               {busy && <div className="scanline" />}
               {evidence.length > 0 && <svg className={`evidence-layer ${revealDone ? '' : 'revealing'}`} viewBox={`0 0 ${rendered.width} ${rendered.height}`} preserveAspectRatio="none" style={{ fontSize: labelSize }}>
                 {evidence.slice(0, shown).map((ev, i) => { const rej = rejectedMain.includes(i); const lbl = isCount ? (rej ? '✕' : String(i + 1 - rejectedMain.filter(j => j < i).length)) : (ev.label || `Evidence ${i + 1}`); const x0 = ev.bbox[0] * unitScaleX, y0 = ev.bbox[1] * unitScaleY, w = (ev.bbox[2] - ev.bbox[0]) * unitScaleX, h = (ev.bbox[3] - ev.bbox[1]) * unitScaleY;
-                  return <g key={i} className={`ev ${rej ? 'rejected' : ''}`} onClick={() => { if (!isCount) return; if (!rejectedMain.includes(i)) sfx.reject(); setRejectedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i]); }}>
+                  return <g key={i} className={`ev ${rej ? 'rejected' : ''} ${review?.likely.includes(i) ? 'likely' : ''}`} onClick={() => { if (!isCount) return; if (!rejectedMain.includes(i)) sfx.reject(); setRejectedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i]); }}>
                     {ev.polygon?.length ? <><polygon className="ring" points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /><polygon points={ev.polygon.map(([x, y]) => `${x * unitScaleX},${y * unitScaleY}`).join(' ')} /></> : <><rect className="ring" x={x0} y={y0} width={w} height={h} /><rect className="under" x={x0} y={y0} width={w} height={h} /><rect x={x0} y={y0} width={w} height={h} /></>}
                     <text x={x0} y={Math.max(rendered.width / 50, y0 - rendered.width / 200)}>{lbl}</text></g>; })}
+                {revealDone && isCount && review?.possible.map((b, i) => { const acc = acceptedMain.includes(i); const x0 = b[0] * unitScaleX, y0 = b[1] * unitScaleY, w = (b[2] - b[0]) * unitScaleX, h = (b[3] - b[1]) * unitScaleY;
+                  return <g key={`p${i}`} className={`ev possible ${acc ? 'accepted' : ''}`} onClick={() => { if (!acc) sfx.tick(1); setAcceptedMain(v => v.includes(i) ? v.filter(x => x !== i) : [...v, i]); }}>
+                    <rect className="under" x={x0} y={y0} width={w} height={h} /><rect x={x0} y={y0} width={w} height={h} /><title>{`Possible, not counted (score ${b[4]}). Tap to ${acc ? 'remove' : 'add'} it.`}</title>
+                    <text x={x0} y={Math.max(rendered.width / 50, y0 - rendered.width / 200)}>{acc ? '+' : '?'}</text></g>; })}
               </svg>}
             </div>}
         </div>
@@ -343,8 +361,11 @@ function MainApp() {
           {answer.abstained ? <><span className="kicker warn">Not confident enough</span><h3>PlanSight won't guess</h3><p>{answer.reason}</p></> : <>
             <div className="answer-top"><span className="kicker">Answer</span><span className="badge">{answer.cached ? 'cached · $0' : answer.method || 'deterministic'}</span></div>
             <div className="answer-value">{liveCount !== null ? liveCount : String(answer.value)}<small>{answer.unit && answer.unit !== 'count' ? answer.unit : ''}</small></div>
-            {(answer.confidence ?? 1) < 1 && <div className="conf"><span>confidence</span><i><em style={{ width: `${Math.round((answer.confidence ?? 1) * 100)}%` }} /></i><b>{Math.round((answer.confidence ?? 1) * 100)}%</b></div>}
-            {rejectedMain.length > 0 && <div className="corrected">You rejected {rejectedMain.length} box{rejectedMain.length > 1 ? 'es' : ''}: corrected from {String(answer.value)}</div>}
+            {review && review.low !== review.high && <div className="range">between <b>{review.low}</b> and <b>{review.high}</b></div>}
+            {(answer.confidence ?? 1) < 1 && <div className="conf"><span>confidence</span><i><em style={{ width: `${Math.round((answer.confidence ?? 1) * 100)}%` }} /></i><b>{Math.round((answer.confidence ?? 1) * 100)}% · {confWord(answer.confidence ?? 1)}</b></div>}
+            {review && <div className="check"><b>Check before you trust this</b><span>{review.reason}</span></div>}
+            {(rejectedMain.length > 0 || acceptedMain.length > 0) && <div className="corrected">You {[rejectedMain.length ? `rejected ${rejectedMain.length} box${rejectedMain.length > 1 ? 'es' : ''}` : '', acceptedMain.length ? `added ${acceptedMain.length} possible item${acceptedMain.length > 1 ? 's' : ''}` : ''].filter(Boolean).join(' and ')}: corrected from {String(answer.value)} to {liveCount}</div>}
+            {isCount && evidence.length > 0 && <button className="btn-ghost sm export" onClick={exportReview}>Export review (CSV)</button>}
             <p className="explain">{answer.explanation}</p>
           </>}
           <div className="cost"><div className="cost-head"><span className="kicker">What this question cost</span><span>{answer.latency_ms != null ? `${(answer.latency_ms / 1000).toFixed(2)} s` : ''}</span></div><CostRace cost={answer.cost_usd ?? 0} naive={answer.naive_cost_usd ?? 0} k={answerKey} cached={!!answer.cached} /></div>

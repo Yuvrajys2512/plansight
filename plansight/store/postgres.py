@@ -68,7 +68,7 @@ def _background(fn) -> None:
         threading.Thread(target=_run, args=(fn,), daemon=True).start()
 
 
-SOLVER_VERSION = "2026-11-15-dedupe"  # bump when answers change, so the cache never serves an outdated answer
+SOLVER_VERSION = "2026-11-15-review"  # bump when answers change, so the cache never serves an outdated answer
 
 
 def cache_key(path: str, question: str) -> str:

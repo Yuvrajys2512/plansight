@@ -125,6 +125,28 @@ def count(path: str, kind: str, verify: bool | None = None) -> Count | None:
                  cost, True)
 
 
+def _review(res: Count, ev: list, kind: str) -> dict | None:
+    """What a reviewer should look at: counted items that only just passed the threshold ("likely"), and near-miss
+    candidates that just failed it ("possible", not counted). The count is between len(sure) and counted + possible."""
+    counted = sorted(res.counted, key=lambda d: (d.bbox[1], d.bbox[0]))
+    likely = [i for i, d in enumerate(counted) if d.conf < res.thr + BORDER]
+    ids = {id(d) for d in res.counted}
+    possible = [[round(v, 1) for v in d.bbox] + [round(float(d.conf), 2)]
+                for d in res.border if id(d) not in ids and id(d) not in {id(r) for r in res.rejected}]
+    if not likely and not possible:
+        return None
+    unit = UNITS.get(kind, kind)
+    parts = []
+    if likely:
+        parts.append(f"{len(likely)} counted {'item only just passes' if len(likely) == 1 else 'items only just pass'} "
+                     f"the detector's {res.thr:.2f} cut-off (outlined dashed)")
+    if possible:
+        parts.append(f"{len(possible)} more {'candidate' if len(possible) == 1 else 'candidates'} just below it {'is' if len(possible) == 1 else 'are'} "
+                     f"not counted (amber); tap one to add it")
+    return {"low": len(counted) - len(likely), "high": len(counted) + len(possible), "likely": likely,
+            "possible": possible, "reason": "; ".join(parts).capitalize() + "."}
+
+
 class CubicasaSolver:
     name = "cubicasa"
 
@@ -148,6 +170,7 @@ class CubicasaSolver:
         ev = [Evidence(file=path, page=0, bbox=tuple(round(v, 1) for v in d.bbox),
                       label=f"{LABELS.get(d.cls, d.cls)} {i + 1} ({d.conf:.2f})")
               for i, d in enumerate(sorted(res.counted, key=lambda d: (d.bbox[1], d.bbox[0])))]
+        review = _review(res, ev, kind)
         unresolved = 0 if res.verified else len(res.border)
         conf = max(0.3, min(0.99, 0.99 - 0.1 * unresolved - 0.03 * len(res.border) * res.verified))
         cost = res.det_ms / 1000 * CPU_USD_PER_S + res.vlm_cost + route.cost_usd
@@ -160,4 +183,4 @@ class CubicasaSolver:
             expl += f" {len(res.border)} detection(s) are borderline (not verified)."
         return Answer(value=len(res.counted), unit="count", evidence=ev,
                       method="detector+vlm" if res.verified else "detector", cost_usd=cost,
-                      confidence=conf, explanation=expl)
+                      confidence=conf, explanation=expl, review=review)

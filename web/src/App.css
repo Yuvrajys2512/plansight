@@ -15,7 +15,7 @@ button { font: inherit; color: inherit; }
 .kicker.warn { color: var(--amber); }
 
 /* ---------- intro ---------- */
-.intro { position: fixed; inset: 0; overflow-x: hidden; display: grid; place-items: center; overflow: auto; padding: 40px 20px; background: var(--bg); z-index: 5; }
+.intro { position: fixed; inset: 0; overflow-x: hidden; display: grid; place-items: center; overflow-y: auto; padding: 40px 20px; background: var(--bg); z-index: 5; }
 .intro-grid { position: absolute; inset: -40px; background: linear-gradient(#3de0ff10 1px, transparent 1px) 0 0 / 48px 48px, linear-gradient(90deg, #3de0ff10 1px, transparent 1px) 0 0 / 48px 48px;
   mask-image: radial-gradient(ellipse at center, #000 20%, transparent 70%); animation: drift 30s linear infinite; }
 @keyframes drift { to { transform: translate(48px, 48px); } }
@@ -404,3 +404,17 @@ button { font: inherit; color: inherit; }
 .live-link { margin-left: auto; font: 700 12px var(--display); color: #071006; background: var(--lime); padding: 7px 11px; border-radius: 9px; text-decoration: none; }
 .xr-hint span { display: block; } .xr-hint.found { border-color: var(--lime); } .xr-hint.found span { color: var(--lime); font-weight: 700; }
 .xr-bottom .btn-primary.big { width: 100%; }
+
+/* review UI: likely / possible evidence, range, check box, export */
+.ev.likely rect:not(.ring):not(.under) { stroke-dasharray: 6 4; }
+.ev.possible rect:not(.under) { fill: #ffb54714; stroke: var(--amber); stroke-width: 2; stroke-dasharray: 5 4; animation: fade .4s both; }
+.ev.possible text { stroke: var(--amber); fill: #1a1000; }
+.ev.possible:hover rect:not(.under) { fill: #ffb54733; }
+.ev.possible.accepted rect:not(.under) { fill: #ffb54740; stroke-dasharray: none; stroke-width: 2.5; }
+.range { font: 500 12px var(--mono); color: var(--muted); margin: -2px 0 8px; } .range b { color: var(--text); }
+.check { margin-top: 10px; padding: 8px 10px; border-radius: 8px; border: 1px solid #ffb54755; background: #ffb54712; font-size: 11.5px; color: #ffd9a0; display: grid; gap: 3px; }
+.check b { color: var(--amber); font: 600 10px var(--mono); letter-spacing: .1em; text-transform: uppercase; }
+.answer .export { margin-top: 10px; }
+.held-chip { margin-left: 10px; font: 600 10.5px var(--mono); color: var(--lime); border: 1px solid #c8ff3d44; background: var(--lime-dim); border-radius: 8px; padding: 5px 8px; white-space: nowrap; }
+.held-chip + .ticker { margin-left: 10px; }
+@media (max-width: 900px) { .held-chip { display: none; } }

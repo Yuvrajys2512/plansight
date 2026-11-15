@@ -30,6 +30,9 @@ class Answer:
     cost_usd: float = 0.0
     confidence: float = 1.0
     explanation: str = ""
+    # Human-review hints for counts: {"low", "high", "likely": [evidence indices counted but borderline],
+    # "possible": [[x0, y0, x1, y1, score], ...] near-miss candidates not counted, "reason": str}. None when sure.
+    review: dict | None = None
 
     def to_dict(self) -> dict:
         return _plain(asdict(self))
