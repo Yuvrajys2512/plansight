@@ -59,7 +59,7 @@ export default function Voice({ ask, openDrawing, flyTo, context }: Props) {
   };
   const stop = () => { conv.endSession(); };
 
-  if (!open) return <button className="voice-fab" onClick={() => void start()}><span className="fab-orb" />Talk to the drawing</button>;
+  if (!open) return <button className="voice-fab" onClick={() => void start()}><span className="fab-orb" />Ask by voice</button>;
   return <div className={`voice-panel ${live ? 'live' : ''} ${conv.isSpeaking ? 'speaking' : ''}`}>
     <div className="voice-top"><span className="kicker">Voice mode · ElevenLabs</span><button className="x" onClick={() => { stop(); setOpen(false); }}>✕</button></div>
     <div className="orb-wrap"><div className="orb" ref={orb}><i /><i /><i /></div></div>

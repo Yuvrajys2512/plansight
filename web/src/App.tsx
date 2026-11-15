@@ -66,17 +66,40 @@ function CostRace({ cost, naive, k, label = 'naive frontier model, full sheet', 
 }
 
 function Intro({ onEnter, onBench, onSnap, stats }: { onEnter: () => void; onBench: () => void; onSnap: () => void; stats: Stats | null }) {
-  const pct = useCountUp(43, 1600, 'intro');
-  const saved = useCountUp(Math.max(0, (stats?.naive_cost_usd ?? 0) - (stats?.cost_usd ?? 0)), 2200, stats?.questions);
+  // Real output on Stoa drawing colorful-268: three windows counted, one near-miss flagged for a human.
+  const W = 2730, H = 2048, fig = 'data/cubicasa5k/colorful-268.png';
+  const counted = [[904, 1793, 1185, 1818], [1581, 1793, 1692, 1818], [1622, 55, 1904, 80]], possible = [877, 51, 1284, 80];
+  const live = stats?.enabled && (stats.questions ?? 0) > 0;
   return <div className="intro">
-    <div className="intro-grid" />
-    <div className="intro-inner">
-      <span className="kicker">AECV-Bench · 120 real floor plans · 30 frontier AI models</span>
-      <h1>The best AI model in the world counts the doors on a floor plan correctly <span className="hot">{Math.round(pct)}%</span> of the time.</h1>
-      <p>Bigger models won't fix that. It's a perception problem, not a reasoning one. <b>PlanSight</b> answers questions about construction drawings with fine-tuned detectors, exact geometry and NVIDIA Nemotron, <b>shows you every item it counted</b>, and costs a fraction of a cent.</p>
-      <div className="intro-stats"><div><b>50% vs 47%</b><span>doors on unseen plans:<br />beats every frontier model</span></div><div><b>1/60</b><span>of the cost of the<br />cheapest frontier model</span></div><div><b>99.5%</b><span>on Stoa's vector plans<br />and IFC models, $0</span></div></div>
-      {stats?.enabled && (stats.questions ?? 0) > 0 && <div className="intro-live"><i className="pulse" />Live at Junction: <b>{(stats.questions ?? 0).toLocaleString()}</b> questions answered by visitors · <b>{money(stats.cost_usd ?? 0)}</b> spent · <b className="saved">{money(saved)}</b> saved vs a frontier model <em>Aiven Postgres</em></div>}
-      <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Ask a drawing →</button><button className="btn-ghost" onClick={onBench}>Race the frontier models</button><button className="btn-ghost" onClick={onSnap}>📷 Snap your own plan</button></div>
+    <div className="sheet">
+      <div className="sheet-top"><span><b>PlanSight</b> · Sheet A-000 · Overview</span><span>Junction 2026 · Make Blueprints Talk (Stoa)</span></div>
+      <div className="sheet-body">
+        <div className="sheet-copy">
+          <h1>Ask the drawing.<br /><em>Check the answer.</em></h1>
+          <p>PlanSight answers plain-language questions about floor plans, vector drawings and IFC models, in any language. <b>Every answer is marked on the sheet</b>, so a site engineer can verify it in seconds. A question costs a fraction of a cent.</p>
+          <p className="finding">On 120 real floor plans, the best frontier AI model counts the doors right <b>43%</b> of the time. Counting is a perception problem, so PlanSight uses fine-tuned detectors and exact geometry, and calls NVIDIA Nemotron only where reading is needed.</p>
+          <div className="intro-cta"><button className="btn-primary" onClick={onEnter}>Open the drawings →</button><button className="btn-ghost" onClick={onBench}>Frontier benchmark</button><button className="btn-ghost" onClick={onSnap}>Snap your own plan</button></div>
+          <div className="sheet-also">Also: lift any plan into <b>3D</b>, or place it on your table in <b>AR</b>.</div>
+        </div>
+        <figure className="sheet-fig" style={{ margin: 0 }}>
+          <div className="fig-q"><b>“How many windows are on this plan?”</b><span>Stoa drawing colorful-268</span></div>
+          <div className="fig-stage">
+            <img src={`/api/render?path=${encodeURIComponent(fig)}&page=0`} alt="Floor plan with the windows PlanSight counted marked in blue" />
+            <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
+              {counted.map(([x0, y0, x1, y1], i) => <g key={i} className="m" style={{ animationDelay: `${.3 + i * .25}s` }}><rect x={x0} y={y0 - 20} width={x1 - x0} height={y1 - y0 + 40} /><text x={x0} y={y0 < 300 ? y1 + 110 : y0 - 50}>{i + 1}</text></g>)}
+              <g className="m p" style={{ animationDelay: '1.2s' }}><rect x={possible[0]} y={possible[1] - 20} width={possible[2] - possible[0] - 20} height={possible[3] - possible[1] + 40} /><text x={possible[0]} y={possible[1] + 150}>?</text></g>
+            </svg>
+          </div>
+          <figcaption className="fig-legend"><span><i />counted: <b>3</b></span><span><i className="p" />sent to a person: <b>1</b></span><span>one tap on <b>?</b> → <b>4</b>, the correct count</span></figcaption>
+        </figure>
+      </div>
+      <div className="title-block">
+        <div><span>Doors · unseen plans</span><b>50% vs 47%</b><small>PlanSight vs best frontier model</small></div>
+        <div><span>Cost per plan</span><b>1/60</b><small>of the cheapest frontier model</small></div>
+        <div><span>Stoa raster plans</span><b>82.7%</b><small>1,000 held-out questions, no LLM</small></div>
+        <div><span>Stoa vector + IFC</span><b>99.5%</b><small>exact geometry, $0</small></div>
+        <div className="live"><span>Live at Junction</span><b>{live ? (stats!.questions ?? 0).toLocaleString() : '—'}</b><small>{live ? <>questions · {money(stats!.cost_usd ?? 0)} spent · Aiven</> : 'questions answered'}</small></div>
+      </div>
     </div>
   </div>;
 }
@@ -207,7 +230,7 @@ function MainApp() {
 
   // Question list with status (review queue): sure / check / won't guess, like a reviewer's worklist.
   const qStatus = (a?: Answer) => !a ? 'todo' : a.abstained ? 'abstain' : (a.review || (a.confidence ?? 1) < .9) ? 'check' : 'sure';
-  const statusLabel: Record<string, string> = { todo: 'not asked', sure: '✓ sure', check: '⚠ check', abstain: "✕ won't guess" };
+  const statusLabel: Record<string, string> = { todo: 'ask →', sure: '✓ sure', check: '⚠ check', abstain: "✕ won't guess" };
   const runAll = async () => {
     if (!selected || runningAll) return;
     const path = selected.path;
@@ -282,12 +305,12 @@ function MainApp() {
   const plansightRight = plan ? plan.plansight[aecvKind]?.count === gold : false;
 
   const header = <header className="topbar">
-    <button className="brand" onClick={() => setIntro(true)}><span className="brandmark">◎</span><span><b>PlanSight</b><small>make blueprints talk</small></span></button>
+    <button className="brand" onClick={() => setIntro(true)}><span className="brandmark">◎</span><span><b>PlanSight</b><small>construction drawing Q&amp;A</small></span></button>
     <nav className="tabs"><button className={view === 'demo' ? 'on' : ''} onClick={() => setView('demo')}>Ask a drawing</button><button className={view === 'aecv' ? 'on' : ''} onClick={() => setView('aecv')}>Frontier vs PlanSight</button></nav>
-    <button className="snap-btn" onClick={() => setSnapOpen(true)}>📷 Snap your own plan</button>
-    <button className="mute" title={muted ? 'Sound off' : 'Sound on'} onClick={() => sfx.setMuted(!muted)}>{muted ? '🔇' : '🔊'}</button>
-    <span className="held-chip" title="Stoa CubiCasa raster questions on held-out test drawings, no LLM">82.7% · 1,000 held-out questions</span>
-    <div className="ticker">{stats?.enabled && stats.questions ? <><i className="pulse" /><b>{stats.questions.toLocaleString()}</b> questions · <b>{money(stats.cost_usd ?? 0)}</b> spent vs <b>{money(stats.naive_cost_usd ?? 0)}</b> frontier · <b>{stats.corrections ?? 0}</b> corrections <em>Aiven Postgres</em></> : <><i className="pulse" />live · CPU · scales to zero</>}</div>
+    <div className="ticker" title={stats?.enabled ? `${stats.questions ?? 0} questions · ${money(stats.cost_usd ?? 0)} spent vs ${money(stats.naive_cost_usd ?? 0)} on a frontier model · ${stats.corrections ?? 0} corrections · logged in Aiven Postgres` : ''}>{stats?.enabled && stats.questions ? <><i className="pulse" /><b>{stats.questions.toLocaleString()}</b> questions · <b>{money(stats.cost_usd ?? 0)}</b> spent <em>(frontier: {money(stats.naive_cost_usd ?? 0)})</em></> : <><i className="pulse" />live</>}</div>
+    <span className="held-chip" title="Stoa CubiCasa raster questions on held-out test drawings, no LLM">82.7% on 1,000 held-out questions</span>
+    <button className="snap-btn" onClick={() => setSnapOpen(true)}>Snap your own plan</button>
+    <button className="mute" title={muted ? 'Sound off' : 'Sound on'} onClick={() => sfx.setMuted(!muted)}>{muted ? 'Sound off' : 'Sound on'}</button>
   </header>;
 
   if (intro) return <>{snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}<Intro onSnap={() => setSnapOpen(true)} stats={stats} onEnter={() => { sfx.whoosh(); setIntro(false); setView('demo'); }} onBench={() => { sfx.whoosh(); setIntro(false); setView('aecv'); }} /></>;
@@ -305,9 +328,9 @@ function MainApp() {
     </section>
     <div className="bench-controls">
       <label>PLAN<select value={aecvPlan} onChange={e => { setAecvPlan(e.target.value); setRejected([]); setAdded([]); }}>{Object.keys(aecv).sort().map(id => <option key={id} value={id}>{id} · split {aecv[id].split}</option>)}</select></label>
-      <button className="btn-ghost sm" onClick={pickRandomPlan}>🎲 Random unseen plan</button>
+      <button className="btn-ghost sm" onClick={pickRandomPlan}>Random unseen plan</button>
       <button className={`btn-ghost sm ${addMode ? 'armed' : ''}`} onClick={() => setAddMode(v => !v)}>{addMode ? 'Tap the plan to add…' : '+ Add a missed item'}</button>
-      {!aDone && <button className="btn-ghost sm" onClick={aSkip}>Skip replay ⏭</button>}
+      {!aDone && <button className="btn-ghost sm" onClick={aSkip}>Skip replay</button>}
     </div>
     {plan && <div className="bench-grid">
       <section className="panel frontier" key={`${aecvPlan}-${aecvKind}`}>
@@ -342,7 +365,7 @@ function MainApp() {
   return <main className="shell">{header}
     <div className="workspace">
       <aside className="panel library">
-        <div className="panel-head"><span className="kicker">Stoa dataset · {drawings.length} drawings</span><h3>Pick a drawing</h3></div>
+        <div className="panel-head"><span className="kicker">Stoa dataset · {drawings.length} drawings</span><h3>Drawings</h3></div>
         {Object.keys(sourceNames).map(source => <section className="source" key={source}><h4>{sourceNames[source]}</h4>
           {drawings.filter(d => d.source === source).map(d => <button className={`d-row ${selected?.path === d.path ? 'on' : ''}`} key={d.path} onClick={() => setSelected(d)}><img src={d.thumbnail_url} alt="" /><span><b>{d.title}</b><small>{d.sample_question || d.path}</small></span></button>)}
         </section>)}
@@ -351,7 +374,7 @@ function MainApp() {
       <section className="panel stage-panel main-stage">
         <div className="stage-head">
           <div><span className="kicker">{selected?.is_model ? 'IFC model · BIM facts' : 'Sheet viewer'}</span><h3>{selected?.title || 'Loading drawings…'}</h3></div>
-          <div className="zoom">{can3d && <button className="ar-launch" onClick={() => setArOpen(true)}>📱 AR on your table</button>}{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => { if (!mode3d) sfx.whoosh(); setMode3d(true); }}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
+          <div className="zoom">{can3d && <button className="ar-launch" onClick={() => setArOpen(true)}>AR on your table</button>}{can3d && <div className="seg"><button className={mode3d ? '' : 'on'} onClick={() => setMode3d(false)}>2D sheet</button><button className={mode3d ? 'on lift' : 'lift'} onClick={() => { if (!mode3d) sfx.whoosh(); setMode3d(true); }}>⬆ Lift to 3D</button></div>}{!mode3d && selected?.is_model && selected.sheet_path && <button onClick={() => setSelected({ ...selected, path: selected.sheet_path!, title: selected.sheet_path!.split('/').pop() || selected.title, is_model: false })}>2D sheet</button>}{!mode3d && !selected?.is_model && selected?.model_path && <button onClick={() => setSelected({ ...selected, sheet_path: selected.path, path: selected.model_path!, title: `${selected.title} · IFC model`, is_model: true })}>Model facts</button>}{!mode3d && !selected?.is_model && <><button onClick={() => setZoom(z => Math.max(1, z - .25))}>−</button><span>{Math.round(zoom * 100)}%</span><button onClick={() => setZoom(z => Math.min(4, z + .25))}>+</button><button onClick={() => { setZoom(1); setOffset({ x: 0, y: 0 }); }}>Fit</button></>}</div>
         </div>
         <div className={`canvas ${busy ? "busy" : ""} ${evidence.length ? "has-ev" : ""}`} ref={canvasRef} onPointerDown={e => { if (zoom > 1 && (e.target as Element).tagName !== 'rect') { (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId); setDrag({ x: e.clientX, y: e.clientY, ox: offset.x, oy: offset.y }); } }} onPointerMove={e => { if (drag) setOffset({ x: drag.ox + e.clientX - drag.x, y: drag.oy + e.clientY - drag.y }); }} onPointerUp={() => setDrag(null)}>
           {!mode3d && (liveCount !== null || (answer && !answer.abstained && Number.isFinite(numeric) && !isCount)) && <div className="stage-counter"><span>{answer?.unit && answer.unit !== 'count' ? answer.unit : 'count'}</span><b className={revealDone ? 'done' : ''}>{liveCount !== null ? liveCount : Number.isInteger(numeric) ? Math.round(rolled) : rolled.toFixed(2)}</b></div>}
@@ -379,8 +402,8 @@ function MainApp() {
       </section>
 
       <aside className="panel ask">
-        <div className="panel-head"><span className="kicker">Ask this drawing · any language</span><h3>What do you want to know?</h3></div>
-        <div className="ask-box"><textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="How many doors are on this floor? · Montako ovea? · Wie viele Türen?" /><button className="btn-primary" onClick={() => void ask()} disabled={busy || !question.trim()}>{busy ? 'Reading…' : 'Ask ↗'}</button></div>
+        <div className="panel-head"><span className="kicker">Ask · any language</span><h3>What do you want to know?</h3></div>
+        <div className="ask-box"><textarea value={question} onChange={e => setQuestion(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); void ask(); } }} placeholder="How many doors are on this floor? · Montako ovea? · Wie viele Türen?" /><div className="ask-actions"><Voice ask={ask} openDrawing={openDrawing} flyTo={flyTo} context={voiceContext} /><button className="btn-primary" onClick={() => void ask()} disabled={busy || !question.trim()}>{busy ? 'Reading…' : 'Ask'}</button></div></div>
         {examples.length > 0 && <div className="qlist">
           <div className="qlist-head"><span className="kicker">Questions on this drawing</span>
             {(qCounts.todo ?? 0) > 0 ? <button className="btn-ghost sm" disabled={busy || !!runningAll} onClick={() => void runAll()}>{runningAll ? `Answering ${examples.length - (qCounts.todo ?? 0) + 1}/${examples.length}…` : 'Run all ▶'}</button>
@@ -408,7 +431,6 @@ function MainApp() {
         <div className="note"><span>✦</span> Every answer is pinned to a region of the drawing you can check in seconds. If the evidence is weak, PlanSight abstains instead of guessing.</div>
       </aside>
     </div>
-    <Voice ask={ask} openDrawing={openDrawing} flyTo={flyTo} context={voiceContext} />
     {snapOpen && <SnapModal onClose={() => setSnapOpen(false)} onImage={onSnap} />}
     {arOpen && selected && <ArQr path={selected.path} q={answer && !answer.abstained ? question : null} onClose={() => setArOpen(false)} />}
   </main>;

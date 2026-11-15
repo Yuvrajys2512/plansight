@@ -12,7 +12,7 @@ export type Highlight = { sceneKind?: string | null; roomNames?: string[]; ifcCl
 export type FlyRequest = { query: string; key: number } | null;
 export type RoomInfo = { name: string; area_m2?: number | null };
 
-const LIME = new THREE.Color('#c8ff3d'), CYAN = new THREE.Color('#3de0ff');
+const LIME = new THREE.Color('#1d4fd8'), CYAN = new THREE.Color('#0f766e');
 const kindLabel: Record<string, string> = { doors: 'doors', windows: 'windows', rooms: 'rooms', units: 'apartments', fixtures: 'fixtures' };
 
 // Spoken/typed words (EN/FI/DE/FR/SV) → the German room labels used on the Swiss plans.
@@ -130,14 +130,14 @@ function PlanModel({ scene, hl, k, focus, onCount }: { scene: PlanScene; hl: Hig
   const dim = targets.length > 0 || focus.length > 0;
   const tagRooms = focus.length ? focus : (kind === 'rooms' || kind === 'units') ? targets.slice(0, shown) : [];
   return <group rotation={[-Math.PI / 2, 0, 0]} position={[-cx, 0, cy]}>
-    {scene.rooms.map(r => { const on = lit.has(r.id) || focusIds.has(r.id); const col = focusIds.has(r.id) ? CYAN : LIME; return <Extruded key={r.id} poly={r.polygon} depth={on ? 0.12 : 0.04} color={on ? col : '#1d2a38'} emissive={on ? col : null} opacity={on ? .6 : 1} lift={lift} />; })}
-    {kind === 'units' && targets.map(u => <Extruded key={u.id} poly={u.polygon} depth={0.06} z={0.02} color={lit.has(u.id) ? LIME : '#1d2a38'} emissive={lit.has(u.id) ? LIME : null} opacity={.35} lift={lift} />)}
-    {scene.walls.map(w => <Extruded key={w.id} poly={w.polygon} holes={w.holes} depth={w.height || 2.7} color="#dfe7ef" opacity={dim ? .45 : .96} lift={lift} />)}
-    {scene.raster && targets.map(t => { const on = lit.has(t.id); const win = kind === 'windows'; return <Extruded key={t.id} poly={t.polygon} depth={win ? 1.3 : kind === 'doors' ? 2.1 : 1} z={win ? .9 : 0} color={on ? LIME : '#3a4a5c'} emissive={on ? LIME : null} opacity={on ? 1 : .4} lift={lift} />; })}
-    {scene.raster && <Extruded poly={[[scene.bounds[0] - .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[3] + .3], [scene.bounds[0] - .3, scene.bounds[3] + .3]]} depth={0.02} color="#172230" lift={lift} />}
-    {scene.doors.map(d => <Extruded key={d.id} poly={d.polygon} depth={lit.has(d.id) ? 2.1 : .05} color={lit.has(d.id) ? LIME : '#6d7d8f'} emissive={lit.has(d.id) ? LIME : null} lift={lift} />)}
+    {scene.rooms.map(r => { const on = lit.has(r.id) || focusIds.has(r.id); const col = focusIds.has(r.id) ? CYAN : LIME; return <Extruded key={r.id} poly={r.polygon} depth={on ? 0.12 : 0.04} color={on ? col : '#e4ded0'} emissive={on ? col : null} opacity={on ? .6 : 1} lift={lift} />; })}
+    {kind === 'units' && targets.map(u => <Extruded key={u.id} poly={u.polygon} depth={0.06} z={0.02} color={lit.has(u.id) ? LIME : '#e4ded0'} emissive={lit.has(u.id) ? LIME : null} opacity={.35} lift={lift} />)}
+    {scene.walls.map(w => <Extruded key={w.id} poly={w.polygon} holes={w.holes} depth={w.height || 2.7} color="#2a2d33" opacity={dim ? .45 : .96} lift={lift} />)}
+    {scene.raster && targets.map(t => { const on = lit.has(t.id); const win = kind === 'windows'; return <Extruded key={t.id} poly={t.polygon} depth={win ? 1.3 : kind === 'doors' ? 2.1 : 1} z={win ? .9 : 0} color={on ? LIME : '#a9a294'} emissive={on ? LIME : null} opacity={on ? 1 : .4} lift={lift} />; })}
+    {scene.raster && <Extruded poly={[[scene.bounds[0] - .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[1] - .3], [scene.bounds[2] + .3, scene.bounds[3] + .3], [scene.bounds[0] - .3, scene.bounds[3] + .3]]} depth={0.02} color="#d8d1c2" lift={lift} />}
+    {scene.doors.map(d => <Extruded key={d.id} poly={d.polygon} depth={lit.has(d.id) ? 2.1 : .05} color={lit.has(d.id) ? LIME : '#8a8478'} emissive={lit.has(d.id) ? LIME : null} lift={lift} />)}
     {scene.windows.map(w => <Extruded key={w.id} poly={w.polygon} depth={1.3} z={.9} color={lit.has(w.id) ? LIME : CYAN} emissive={lit.has(w.id) ? LIME : null} opacity={lit.has(w.id) ? 1 : .35} lift={lift} />)}
-    {scene.fixtures.map(f => <Extruded key={f.id} poly={f.polygon} depth={lit.has(f.id) ? .9 : .45} color={lit.has(f.id) ? LIME : '#8a99aa'} emissive={lit.has(f.id) ? LIME : null} lift={lift} />)}
+    {scene.fixtures.map(f => <Extruded key={f.id} poly={f.polygon} depth={lit.has(f.id) ? .9 : .45} color={lit.has(f.id) ? LIME : '#bdb6a6'} emissive={lit.has(f.id) ? LIME : null} lift={lift} />)}
     {tagRooms.filter(t => t.name || kind === 'units').slice(0, 14).map((t, i) => { const [x, y] = centroid(t.polygon); return <Html key={t.id} position={[x, y, 3]} center distanceFactor={focus.length ? 13 : 18} zIndexRange={[5, 0]}><div className={`tag3d ${focus.length ? 'cyan' : ''}`}>{kind === 'units' ? `apartment ${i + 1}` : t.name}{t.number ? <small>{t.number}{t.area_m2 ? ` · ${t.area_m2} m²` : ''}</small> : t.area_m2 ? <small>{t.area_m2} m²</small> : null}</div></Html>; })}
   </group>;
 }
@@ -160,7 +160,7 @@ function IfcModel({ scene, hl, k, onCount }: { scene: IfcScene; hl: Highlight; k
     base: new THREE.MeshStandardMaterial({ color: '#d7e1ea', roughness: .6, metalness: .05 }),
     ghost: new THREE.MeshStandardMaterial({ color: '#8fb4d6', transparent: true, opacity: .09, depthWrite: false }),
     lit: new THREE.MeshStandardMaterial({ color: LIME, emissive: LIME, emissiveIntensity: 1.3, roughness: .4 }),
-    pending: new THREE.MeshStandardMaterial({ color: '#3a4a5c', transparent: true, opacity: .5 }),
+    pending: new THREE.MeshStandardMaterial({ color: '#a9a294', transparent: true, opacity: .5 }),
   }), []);
   const litSet = new Set(targets.slice(0, shown).map(t => t.mesh));
   const targetSet = new Set(targets.map(t => t.mesh));
@@ -215,12 +215,12 @@ export default function Scene3D({ path, hl, k, fly, onRooms }: { path: string; h
     {err && <div className="scene-msg">{err}</div>}
     {!scene && !err && <div className="scene-msg">Building 3D from the {path.includes('ifc') ? 'IFC model' : 'CAD layers'}…</div>}
     {scene && <Canvas shadows dpr={[1, 2]} camera={{ fov: 40, near: .1, far: 1000, position: [0, size * 1.25, .001] }}>
-      <color attach="background" args={['#060a10']} />
-      <fog attach="fog" args={['#060a10', size * 1.6, size * 4.5]} />
+      <color attach="background" args={['#efebe2']} />
+      <fog attach="fog" args={['#efebe2', size * 1.6, size * 4.5]} />
       <ambientLight intensity={.55} />
       <directionalLight position={[size * .6, size, size * .4]} intensity={1.6} castShadow shadow-mapSize={[2048, 2048]} />
-      <directionalLight position={[-size, size * .5, -size * .6]} intensity={.4} color="#3de0ff" />
-      <gridHelper args={[size * 3, Math.round(size * 3), '#16324a', '#0d1b29']} position={[0, -0.01, 0]} />
+      <directionalLight position={[-size, size * .5, -size * .6]} intensity={.4} color="#ffffff" />
+      <gridHelper args={[size * 3, Math.round(size * 3), '#cfc8b8', '#e0dacd']} position={[0, -0.01, 0]} />
       <Suspense fallback={null}>
         {scene.kind === 'plan' ? <PlanModel scene={scene} hl={hl} k={`${k}-${path}`} focus={focus?.rooms || []} onCount={(a, b) => setCount([a, b])} /> : <IfcModel scene={scene} hl={hl} k={`${k}-${path}`} onCount={(a, b) => setCount([a, b])} />}
       </Suspense>
