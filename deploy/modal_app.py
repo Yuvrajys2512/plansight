@@ -26,7 +26,7 @@ image = (
                  "psycopg[binary]", "cloudinary", "trimesh", "mapbox-earcut")
     # rapidocr depends on full opencv-python (needs X11); swap in the headless build that provides the same cv2
     .run_commands("pip uninstall -y opencv-python && pip install --force-reinstall --no-deps opencv-python-headless")
-    .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PLANSIGHT_GEMMA_ROUTER": "1", "PYTHONPATH": "/root"})
+    .env({"PLANSIGHT_DATA": "/root/junction-dataset", "PLANSIGHT_NO_LLM": "1", "PLANSIGHT_GEMMA_ROUTER": "1", "GEMMA_RETRIES": "2", "GEMMA_TIMEOUT_S": "25", "PYTHONPATH": "/root"})
     .add_local_dir(ROOT / "deploy" / "bundle" / "junction-dataset", "/root/junction-dataset")
     .add_local_dir(ROOT / "models", "/root/models")
     .add_local_dir(ROOT / "cache", "/root/cache", ignore=IGNORE)

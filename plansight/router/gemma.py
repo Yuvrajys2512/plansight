@@ -105,7 +105,7 @@ def _load_cache() -> dict[str, dict]:
     return _cache
 
 
-def _call(prompt: str, retries: int = 6) -> dict:
+def _call(prompt: str, retries: int = int(os.getenv("GEMMA_RETRIES", "6"))) -> dict:
     key = os.environ["GEMINI_API_KEY"]
     body = {"contents": [{"role": "user", "parts": [{"text": prompt}]}],
             "generationConfig": {"temperature": 0, "maxOutputTokens": 256,
@@ -113,13 +113,15 @@ def _call(prompt: str, retries: int = 6) -> dict:
     delay = 2.0
     for attempt in range(retries):
         try:
-            r = httpx.post(URL.format(model=MODEL), headers={"x-goog-api-key": key}, json=body, timeout=180)
+            r = httpx.post(URL.format(model=MODEL), headers={"x-goog-api-key": key}, json=body, timeout=float(os.getenv("GEMMA_TIMEOUT_S", "180")))
             if r.status_code == 200:
                 return r.json()
             if r.status_code not in (429, 500, 502, 503, 504):
                 raise RuntimeError(f"Gemma HTTP {r.status_code}: {r.text[:200]}")
         except httpx.TransportError:
             pass
+        if attempt == retries - 1:
+            break
         time.sleep(delay + random.random())
         delay = min(delay * 2, 60)
     raise RuntimeError("Gemma: retries exhausted")

@@ -59,7 +59,8 @@ def parse(path: str, question: str, *, use_llm: bool | None = None, bank=None) -
 
         try:
             p, cost, _ = gemma.route(dom, question)
-        except Exception:
+        except Exception as e:  # noqa: BLE001
+            print(f"gemma router failed: {type(e).__name__}: {str(e)[:200]}", flush=True)
             return done(Route(None, method="none", lang=detect(question)))
         if p is not None:
             return done(Route(*p, method="gemma", lang=detect(question), cost_usd=cost))
